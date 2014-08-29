@@ -2,7 +2,9 @@
 Module main_stuff
  Implicit none 
 real(8),dimension(:,:),allocatable :: Oxy, Hydro, Msites
-real(8),dimension(:)  ,allocatable :: k, chik0, omegas, chik0T, eps0T, chik0_self, str_fac, phiTcomponent
+real(8),dimension(:)  ,allocatable :: k, omegas,  phiTcomponent
+real(8),dimension(:)  ,allocatable ::  chik0,   chik0_self, chik0_distinct
+real(8),dimension(:)  ,allocatable ::  chik0T, eps0T, str_fac
 real(8),dimension(:,:),allocatable ::  phiL, phiT, chikw, chikT, str_fackt
 double complex, dimension(:,:), allocatable :: rhokt 
 double complex, dimension(:,:,:), allocatable :: polTkt
@@ -28,7 +30,7 @@ real(8) :: rHH, rMH
  character(len=3) :: filetype    
 Integer               :: ID1,STEP,RET, NAT, indx, maxsteps
 Integer, parameter   :: MAGIC=1995, MAXAT=1000000001
-real(4)                :: XTCBOX(9),DT,TIME,PREC, OLDTIME
+real(4)                :: XTCBOX(9),DT,TIME,PREC,OLDTIME
 real(4), dimension(:),allocatable, save :: X
 !Fourier transform stuff
 complex, dimension(:), allocatable :: aux1,vcross 
@@ -65,51 +67,51 @@ end subroutine read_input_file
 !------------------------------------------------------------------------------
 subroutine set_up_model
 if (model == 'spce') then
-	qO = -.8476
-	qH = .4238
+	qO = -.8476d0
+	qH = .4238d0
 	TIP4P = .false. 
 	write(*,*) "Model is SPC/E"
 else if (model == 'tip3p') then
-	qO = -0.834
-	qH =  0.417 	
-	rMH = 0.9572
-	rHH = 1.5139
+	qO = -0.834d0
+	qH =  0.417d0 	
+	rMH = 0.9572d0
+	rHH = 1.5139d0
 	TIP4P = .false. 
 	write(*,*) "Model is TIP3P"
 else if ((model == 'tip4eps') .or. (model == 'TIP4eps')) then
-	qO = -1.054
-	qH =  0.527
-	rOM = .105
-	rHH = 1.513900
-	rMH = 0.896784
+	qO = -1.054d0
+	qH =  0.527d0
+	rOM = .105d0
+	rHH = 1.513900d0
+	rMH = 0.896784d0
 	TIP4P = .true. 
 	write(*,*) "Model is TIP4eps"
 else if (model == 'tip4p') then
-	qO = -1.04
-	qH = .52
-	rOM = .15
+	qO = -1.04d0
+	qH = .52d0
+	rOM = .15d0
 	TIP4P = .true.
 	write(*,*) "Model is TIP4P"
 else if (model == 'tip4p2005') then
-	qO = -1.1128
-	qH = .5564
-	rOM = .15555
-	rHH = 1.513900
-	rMH = 0.896784
+	qO = -1.1128d0
+	qH = .5564d0
+	rOM = .15555d0
+	rHH = 1.513900d0
+	rMH = 0.896784d0
 	TIP4P = .true.
 	write(*,*) "Model is TIP4P/2005"
 else if (model == 'tip4p2005f') then
-	qO = -1.1128	
-	qH = .5564
-	rOM = .1546
+	qO = -1.1128d0	
+	qH = .5564d0
+	rOM = .1546d0
 	rHH = 1.513900 !these are TIP4P/2005
 	rMH = 0.896784
 	TIP4P = .true.
 	write(*,*) "Model is TIP4P/2005f"
 else 
 	write(*,*) "Model is generic 3 site"
-	qO = -1	
-	qH = .5
+	qO = -1d0	
+	qH = .5d0
 	rOM = .1546
 	rHH = 1.513900  
 	rMH = 0.896784
@@ -127,6 +129,9 @@ if ( .not. (qO + 2*qH .eq. 0) ) then
 	write(*,*) "ERROR in charge values!!"
 	stop
 endif
+write(*,*) "qO = ", qO
+write(*,*) "qH = ", qH
+
 end subroutine set_up_model
    
 !------------------------------------------------------------------------------
@@ -224,6 +229,10 @@ subroutine read_trajectory_frame
 
 	if (t .gt. 1) then
         	CALL READXTC(ID1,NAT,STEP,TIME,XTCBOX,X,PREC,RET)
+		OLDTIME = time
+	endif 
+	if (t .eq. 2) then
+		write(*,*) "measured timestep is ", OLDTIME - TIME , " ps" 
 	endif 
 
 	!move coords from the X(:) array to the Oxy & Hydro arrays

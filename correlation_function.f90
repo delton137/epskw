@@ -19,7 +19,7 @@ subroutine simple_complex_corr_function(input, ACF, nsteps, tcorr)
 	!we want t = 1 to be t = 0
 	tmax = nsteps - t - 1 
 	do t0 = 1, tmax	
-		ACF(t) = ACF(t) + dble( input(t0)*conjg(input(t0 + t - 1)) )
+		ACF(t) = ACF(t) + dble( conjg(input(t0))*input(t0 + t - 1) )
 	enddo
 
 	!normalization  1
@@ -27,7 +27,7 @@ subroutine simple_complex_corr_function(input, ACF, nsteps, tcorr)
  enddo
  
  !normalization  2
- ACF = ACF/ACF(1)
+! ACF = ACF/ACF(1)
 
 end subroutine simple_complex_corr_function
 
@@ -78,7 +78,7 @@ subroutine calc_corr_function(input,output,N)
  enddo
 
  !normalization 2
- output = output/output(1)
+! output = output/output(1)
 
 end subroutine calc_corr_function
 

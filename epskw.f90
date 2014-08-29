@@ -38,28 +38,34 @@ max_num = floor(maxk/mink)
 write(*,*) "minimum k vector = ", mink
 write(*,*) "number of k's = ", max_num
 
-!Nk = 6
-Nk = max_num
+Nk = 6
+!Nk = max_num
 allocate(chik0(Nk))
+allocate(chik0_self(Nk))
+
 allocate(chik0T(Nk))
 allocate(eps0T(Nk))
+
+allocate(str_fac(Nk))
+
 allocate(rhokt(Nk,maxsteps))
 allocate(chikT(Nk,maxsteps))
 allocate(str_fackt(Nk,maxsteps))
-allocate(str_fac(maxsteps))
-allocate(chik0_self(Nk))
+allocate(polTkt(Nk,maxsteps,3))
+
+
 allocate(k(Nk))
 
-do i = 1, max_num
-	k(i) =  i*mink
-enddo
+!do i = 1, max_num
+!	k(i) =  i*mink
+!enddo
 
-!k(1) = mink
-!k(2) = 2*mink
-!k(3) = 1
-!k(4) = 2
-!k(5) = 3
-!k(6) = 4
+k(1) = mink
+k(2) = 2*mink
+k(3) = 3*mink
+k(4) = 4*mink
+k(5) = 5*mink
+k(6) = 6*mink
 
  chik0_self = 0 
  chik0 = 0 
@@ -96,58 +102,62 @@ enddo
 
 1000 continue 
 
-!--------------------------------------------------------------------------------- 
-!----------------  Normalization & prefactors ----------------------------------- 
-!---------------------------------------------------------------------------------
- vol = box(1)*box(2)*box(3)
- prefac = (e2C**2)/(eps_0*kb*temp*vol*a2m) 
-
- !prefactors
- PolTkt = PolTkt/(3d0*dble(nsteps)) 
- chik0 = chik0/(3d0*dble(nsteps))  
- chik0_self = chik0_self/(3d0*dble(Nmol)*dble(nsteps)) 
- str_fackt = str_fackt/(3d0*dble(Nmol)*dble(nsteps))  
-
-do n = 1, Nk
- 	chik0(n) = chik0(n)/(k(n)**2)
-	chik0_self(n) = chik0_self(n)/(k(n)**2)
-
-	str_fac(n) = sum(str_fackt(n,1:nsteps)) 
-
- 	!static transverse part (we use chik0T) as a temporary array
-	do t = 1, nsteps
-		chik0T(n) = chik0T(n) + dot_product( PolTkt(n,t,:), conjg(PolTkt(n,t,:)) )
-	enddo
-
-	eps0T(n) = 1d0 + prefac*chik0T(n)  
-
-	chik0T(n) = 1d0 - 1d0/eps0T(i)
-enddo
-
-
 
 !--------------------------------------------------------------------------------- 
 !----------------  Compute autocorrelation functions ---------------------------- 
 !--------------------------------------------------------------------------------- 
 allocate(phiTcomponent(nsteps))
-allocate(polTkt(Nk,nsteps,3))
 allocate(phiL(Nk,nsteps))
 allocate(phiT(Nk,nsteps))
 
 
 phiL = 0 
+phiT = 0 
+phiTcomponent = 0 
 
 do i = 1, Nk
 	call simple_complex_corr_function(rhokt(i,1:nsteps), phiL(i,1:nsteps), nsteps, nsteps)
 	!call calc_corr_function(rhokt(i,1:nsteps), phiL(i,1:nsteps), nsteps) 
+
 	do ix = 1,3
-		call simple_complex_corr_function(PolTkt(i,:,ix), phiTcomponent, nsteps, nsteps)
-		!call calc_corr_function(PolTkt(i,:,ix), phiTcomponent, nsteps) 
+		call simple_complex_corr_function(PolTkt(i,1:nsteps,ix), phiTcomponent, nsteps, nsteps)
+		!qcall calc_corr_function(PolTkt(i,:,ix), phiTcomponent, nsteps) 
 		phiT(i,:) = phiT(i,:) + phiTcomponent
 	enddo
 enddo
 
 
+
+!--------------------------------------------------------------------------------- 
+!----------------  Normalization & prefactors ----------------------------------- 
+!---------------------------------------------------------------------------------
+ write(*,*) "number of steps used: ", nsteps
+ vol = box(1)*box(2)*box(3)
+ prefac = (e2C**2)/(eps_0*kb*temp*vol*a2m) 
+
+ !prefactors
+ PolTkt = prefac*PolTkt/(3d0*dble(nsteps)) 
+ chik0 = prefac*chik0/(3d0*dble(nsteps))  
+ chik0_self = prefac*chik0_self/(3d0*dble(nsteps)) 
+ str_fackt = str_fackt/(3d0*dble(Nmol)*dble(nsteps))  
+
+ !static transverse  
+ eps0T  = 1d0 + phiT(:,1) 
+ chik0T = 1d0 - 1d0/eps0T
+
+do n = 1, Nk
+ 	chik0(n) = chik0(n)/(k(n)**2)
+
+	chik0_self(n) = chik0_self(n)/(k(n)**2)
+
+	str_fac(n) = sum(str_fackt(n,1:nsteps)) 
+
+	!2nd normalization of correlation fun
+	phiT(n,:) = phiT(n,:)/phiT(n,1)
+	phiL(n,:) = phiL(n,:)/phiL(n,1)
+enddo
+
+ 
 
 !-------------------------------------------------------------------------------
 !--------------------------  calculate Im{chi(k,w)}----------------------------

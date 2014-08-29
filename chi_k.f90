@@ -66,12 +66,15 @@ subroutine calc_chik_transverse
  double complex, dimension(3) :: Pol !total polarization vector at that k
 
 do n = 1, Nk 
-	Pol = 0 
+
 	!transverse part
 	do ix = 1,3
+
+		Pol = 0
 		do i = 1, Nmol
 			rCM = (16d0*Oxy(:,i) +  Hydro(:,2*i)  + Hydro(:,2*i-1))/18d0
-			mPol = 0 
+
+			mPol = 0
 			do j = 1,3
 				if (j .eq. 1) raj = Oxy(:,i) - rCM
 				if (j .eq. 2) raj = Hydro(:,2*i-0) - rCM
@@ -80,17 +83,32 @@ do n = 1, Nk
 				if (j .eq. 2) q = qH
 				if (j .eq. 3) q = qH
 
+				if (raj(ix) /= 0.0) then
+					mPol = mPol - dcmplx(0, 1)*( q*raj/(k(n)*raj(ix)) )*( exp( dcmplx(0, 1)*k(n)*raj(ix) ) - (1d0,1d0) ) 
+				endif
 
-				mPol = mPol - dcmplx(0, 1)*( q*raj/(k(n)*raj(ix)) )*( exp( dcmplx(0, -1)*k(n)*raj(ix) ) - 1d0 ) 
-				
 			enddo 
-			Pol = Pol + mPol*exp( dcmplx(0, -1)*k(n)*rCM(ix) ) 
-		enddo
 
-		if (ix .eq. 1) PolTkt(n,t,:) = PolTkt(n,t,:) + cross_product( (/ k(n), 0d0,  0d0 /) , Pol)
-		if (ix .eq. 2) PolTkt(n,t,:) = PolTkt(n,t,:) + cross_product( (/ 0d0 , k(n), 0d0 /) , Pol)
-		if (ix .eq. 3) PolTkt(n,t,:) = PolTkt(n,t,:) + cross_product( (/ 0d0 , 0d0, k(n) /) , Pol)
+			if (Pol(1) /= Pol(1) ) then
+				write(*,*) "ERROR in transverse polarization!! NaN"
+				write(*,*) "i  ", i
+				write(*,*) "j  ", j
+				write(*,*) "ix ", ix
+				write(*,*) "n ", n
+				write(*,*) "Pol = ", Pol
+				write(*,*) "mPol = ", mPol
+				write(*,*) "product ",  mPol*cmplx( dcos(k(n)*rCM(ix)),  -dsin(k(n)*rCM(ix)) )
+			endif
+			Pol = Pol + mPol*cmplx( dcos(k(n)*rCM(ix)),  -dsin(k(n)*rCM(ix)) )
+		
+
+		enddo
+ 		
+		if (ix .eq. 1) PolTkt(n,t,:) = PolTkt(n,t,:) + cross_product((/ k(n), 0d0,  0d0 /) , Pol)
+		if (ix .eq. 2) PolTkt(n,t,:) = PolTkt(n,t,:) + cross_product((/ 0d0 , k(n), 0d0 /) , Pol)
+		if (ix .eq. 3) PolTkt(n,t,:) = PolTkt(n,t,:) + cross_product((/ 0d0 , 0d0, k(n) /) , Pol)
 	enddo
+
 enddo
 
 
@@ -111,17 +129,17 @@ end subroutine calc_chik_TTM3F
 
 
 !----------------------------------------------------------------------------------
-!------------------- function to compute cross product ---------------------------
+!------------------- function to compute COMPLEX cross product ---------------------------
 !----------------------------------------------------------------------------------
 function cross_product(x,z)
  Implicit None
- real(8), dimension(3), intent(in)  :: x
- double complex, dimension(3), intent(in) :: z
- real(8), dimension(3) :: cross_product
+ real(8), dimension(3), intent(in) :: x
+ double complex, dimension(3), intent(in) :: z 
+ double complex, dimension(3) :: cross_product
 
-  cross_product(1) = x(2)*z(3) - z(2)*x(3) 
-  cross_product(2) = z(1)*x(3) - x(1)*z(3)
-  cross_product(3) = x(1)*z(2) - z(1)*x(2)	
+  cross_product(1) = cmplx(x(2))*z(3) - z(2)*cmplx(x(3)) 
+  cross_product(2) = z(1)*cmplx(x(3)) - cmplx(x(1))*z(3)
+  cross_product(3) = cmplx(x(1))*z(2) - z(1)*cmplx(x(2))
 
 end function cross_product
 
