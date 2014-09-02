@@ -1,24 +1,37 @@
 !Module to store the Input-Output part of the code and global variables
 Module main_stuff
  Implicit none 
+!-- kvec stuff --------------
+integer, parameter :: max_num_kvecs=2000
+real(8),dimension(3,max_num_kvecs) :: kvec
+real(8),dimension(2000) :: mags
+real(8),dimension(:), allocatable :: magk
+integer, dimension(2000) :: num_this_mag=0
+integer :: num_ind_mags
+real(8), dimension(3) :: mink
+real(8) :: mag1
+integer, dimension(3) :: max_num
+!-----------------------------
 real(8),dimension(:,:),allocatable :: Oxy, Hydro, Msites
-real(8),dimension(:)  ,allocatable :: k, omegas,  phiTcomponent
+real(8),dimension(:)  ,allocatable :: omegas,  phiTcomponent
 real(8),dimension(:)  ,allocatable ::  chik0,   chik0_self, chik0_distinct
-real(8),dimension(:)  ,allocatable ::  chik0T, eps0T, str_fac
-real(8),dimension(:,:),allocatable ::  phiL, phiT, chikw, chikT, str_fackt
-double complex, dimension(:,:), allocatable :: rhokt 
-double complex, dimension(:,:,:), allocatable :: polTkt
+real(8),dimension(:)  ,allocatable ::  chik0T_tr, eps0T_tr, str_fac
+real(8),dimension(:)  ,allocatable :: magk_tr, chik0_tr, chik0_self_tr 
+real(8),dimension(:)  ,allocatable :: str_fac_tr, chik0_err, str_fac_err
+real(8),dimension(:,:),allocatable ::  phiL, phiT, chikw, chikT, str_fackt, str_fackt_tr
+double complex, dimension(:,:), allocatable :: rhokt, rhokt_tr
+double complex, dimension(:,:,:), allocatable :: polTkt, polTkt_tr
 real(8), dimension(:),allocatable :: qHs, qOs
 real(8),dimension(3) :: v1, v2, v3, summ, box, ibox
-real(8) ::  tmpOr, tmpOc, tmpHr, tmpHc, Orp, Ocp, Hrp, Hcp, mink
+real(8) ::  tmpOr, tmpOc, tmpHr, tmpHc, Orp, Ocp, Hrp, Hcp
  character(len=3) :: sym
  character(120)   :: fileinp
  character(120) :: TTM3F_dip_input,fileheader,model
 real(8) :: vol,  maxk, qO, qH, qO2, qH2, temp,  qOqH, delta
-real(8) :: prefac,  r, seconds, rOM, mag1, timestep, max_freq 
-integer :: Na, Nmol, i, j, ia, ix, nsteps, w
-integer :: npts, t, n, Nk, ierror, max_num, Nw
-logical :: TIP4P, GRIDSAMPLE, TTM3F
+real(8) :: prefac,  r, seconds, rOM, timestep, max_freq 
+integer :: Na, Nmol, i, j, k, ia, ix, nsteps, w
+integer :: npts, t, n, Nk, ierror,  Nw
+logical :: TIP4P, GRIDSAMPLE, TTM3F, SMALLKSET
 real(8), parameter :: pi = 3.14159265d0 
 real(8), parameter :: kb = 1.3806488d-23 ! Jul/Kelvin
 real(8), parameter :: eps_0 = 8.85418781d-12 ! F/m = C^2/Jul/m
@@ -59,6 +72,7 @@ read(5,*) qH
 read(5,*) maxsteps
 read(5,*) Na
 read(5,*) timestep
+read(5,*) SMALLKSET
 !close(5)
 end subroutine read_input_file
 
@@ -129,8 +143,6 @@ if ( .not. (qO + 2*qH .eq. 0) ) then
 	write(*,*) "ERROR in charge values!!"
 	stop
 endif
-write(*,*) "qO = ", qO
-write(*,*) "qH = ", qH
 
 end subroutine set_up_model
    
@@ -217,6 +229,108 @@ endif
 
 
 end subroutine open_trajectory_files
+
+!------------------------------------------------------------------------------
+!--------------------------- set up k vectors --------------------------------
+!--------- because of PBCs, k values must be multiples of mink --------------
+!------------------------------------------------------------------------------
+subroutine setup_k_vectors
+
+ ibox = 1d0/box
+ mink = 2d0*pi/box
+ max_num = floor(maxk/mink)
+
+
+ write(*,*) "minimum k's in each direction:"
+ write(*,*) mink
+ write(*,*) "maximum number of k's along each edge:"
+ write(*,*) max_num 
+ write(*,*) "maximum number of k's along edges", sum(max_num)
+
+if (SMALLKSET) then
+
+	Nk = 11*3
+
+	n = 1
+	do ix = 1,3
+		kvec(ix,n+0)  =  1*mink(ix)
+		kvec(ix,n+1)  =  2*mink(ix)
+		kvec(ix,n+2)  =  3*mink(ix)
+		kvec(ix,n+3)  =  4*mink(ix)
+		kvec(ix,n+4)  =  floor(2d0/mink(ix))*mink(ix) 
+		kvec(ix,n+5)  =  floor(3d0/mink(ix))*mink(ix) 
+		kvec(ix,n+6)  =  floor(4d0/mink(ix))*mink(ix) 
+		kvec(ix,n+7)  =  floor(5d0/mink(ix))*mink(ix) 
+		kvec(ix,n+8)  =  floor(6d0/mink(ix))*mink(ix) 
+		kvec(ix,n+9)  =  floor(8d0/mink(ix))*mink(ix) 
+		kvec(ix,n+10) =  floor(10d0/mink(ix))*mink(ix) 
+
+		n = n + 11
+	enddo
+
+	mags(1:Nk) = sum(kvec(:,:),1)	
+
+else
+
+
+ !k vectors parallel to box edges 
+ n = 1
+ do ix = 1,3
+ 	do i = 1, max_num(ix)
+		!if (i*mink(ix) .gt. 7) then
+			!at greater than k = 7 , k points become more sparse
+			!if (mod(4,i) .eq. 0) then	
+				!write(*,*) "derp"	
+				!kvec(ix,n) =  i*mink(ix)
+				!mags(n) = i*mink(ix)
+				!n = n + 1
+			!endif
+		!else 
+			kvec(ix,n) =  i*mink(ix)
+			mags(n) = i*mink(ix)
+			n = n + 1
+		!endif
+	enddo 
+ enddo
+ write(*,*) "Using ", n-1, "k vectors parallel to the box edges"
+
+ !construct diagonal k vectors
+! do i = 0,3
+!	do j = 0,3
+!		do k = 0,3
+!			if ( i+j+k .gt. 1) then
+!				mag1 = dsqrt( (i*mink(1))**2 + (j*mink(2))**2 + (k*mink(3))**2 )
+!				if ( (mag1 .lt. maxk) .and. (i+j+k .ne. 0 ) ) then
+!					kvec(:,n) = (/  i*mink(1), j*mink(2), k*mink(3) /)
+!					mags(n) = mag1
+!					n = n + 1
+!				endif
+!			endif
+!		enddo
+!	enddo
+ !enddo
+ Nk = n - 1
+
+endif! (SMALLKSET)
+
+ write(*,*) "Total number of k vectors (including diagonals) = ", Nk
+
+ allocate(magk(Nk))
+ allocate(chik0(Nk))
+ allocate(chik0_self(Nk))
+ allocate(str_fac(Nk))
+
+ allocate(rhokt(Nk,maxsteps))
+ allocate(chikT(Nk,maxsteps))
+ allocate(str_fackt(Nk,maxsteps))
+
+ allocate(polTkt(Nk,maxsteps,3))
+
+ magk = mags(1:Nk)
+
+ call Bubble_Sort(magk, kvec, Nk, max_num_kvecs)
+
+end subroutine setup_k_vectors
 
 
 
@@ -334,21 +448,21 @@ subroutine write_out
  write(20,'(a)') '@ legend length 4 '
  write(20,'(a)') '@ legend vgap 1  '
  write(20,'(a)') '@ legend hgap 0 '
- write(20,'(a,1I2)') '@ legend length ', Nk
-do i = 1, Nk
+ write(20,'(a,1I2)') '@ legend length ', num_ind_mags
+do i = 1, num_ind_mags
 	if (i .lt. 10) then 
- 		write(20,'(a,I1,a,1f6.2,a,1f6.2,a)') '@ s', i-1, ' legend "k = ', k(i) ,'\cE\C\S-1\N \f{Symbol}l\f{Times-Roman} =', (2.0*pi)/k(i),'\cE\C" '
+ 		write(20,'(a,I1,a,1f6.2,a,1f6.2,a)') '@ s', i-1, ' legend "k = ', magk_tr(i) ,'\cE\C\S-1\N \f{Symbol}l\f{Times-Roman} =', (2.0*pi)/magk_tr(i),'\cE\C" '
 	else
- 		write(20,'(a,I2,a,1f6.2,a,1f6.2,a)') '@ s', i-1, ' legend "k =', k(i)  ,'\cE\C\S-1\N \f{Symbol}l\f{Times-Roman} =', (2.0*pi)/(i),'\cE\C" '
+ 		write(20,'(a,I2,a,1f6.2,a,1f6.2,a)') '@ s', i-1, ' legend "k =', magk_tr(i)  ,'\cE\C\S-1\N \f{Symbol}l\f{Times-Roman} =', (2.0*pi)/(i),'\cE\C" '
 	endif
 enddo
 
  do t = 1, nsteps/2
 	write(20,'(1ES12.3)',advance='no') real(t-1)*timestep 
- 	do n = 1, Nk-1
+ 	do n = 1, num_ind_mags-1
  		write(20,'(1f12.4)',advance='no') phiL(n,t) 
 	enddo
-	 	write(20,'(1f12.4)',advance='yes') phiL(Nk,t) 
+	 	write(20,'(1f12.4)',advance='yes') phiL(num_ind_mags,t) 
  enddo
  close(20)
 
@@ -389,21 +503,21 @@ enddo
  write(20,'(a)') '@ legend length 4 '
  write(20,'(a)') '@ legend vgap 1  '
  write(20,'(a)') '@ legend hgap 0 '
- write(20,'(a,1I2)') '@ legend length ', Nk
-do i = 1, Nk
+ write(20,'(a,1I2)') '@ legend length ', num_ind_mags
+do i = 1, num_ind_mags
 	if (i .lt. 10) then 
- 		write(20,'(a,I1,a,1f6.2,a,1f6.2,a)') '@ s', i-1, ' legend "k = ', k(i) ,'\cE\C\S-1\N \f{Symbol}l\f{Times-Roman} =', (2.0*pi)/k(i),'\cE\C" '
+ 		write(20,'(a,I1,a,1f6.2,a,1f6.2,a)') '@ s', i-1, ' legend "k = ', magk_tr(i) ,'\cE\C\S-1\N \f{Symbol}l\f{Times-Roman} =', (2.0*pi)/magk_tr(i),'\cE\C" '
 	else
- 		write(20,'(a,I2,a,1f6.2,a,1f6.2,a)') '@ s', i-1, ' legend "k =', k(i) ,'\cE\C\S-1\N \f{Symbol}l\f{Times-Roman} =', (2.0*pi)/(i),'\cE\C" '
+ 		write(20,'(a,I2,a,1f6.2,a,1f6.2,a)') '@ s', i-1, ' legend "k =', magk_tr(i) ,'\cE\C\S-1\N \f{Symbol}l\f{Times-Roman} =', (2.0*pi)/(i),'\cE\C" '
 	endif
 enddo
 
  do t = 1, nsteps/2
 	write(20,'(1ES12.3)',advance='no') real(t-1)*timestep 
- 	do n = 1, Nk-1
+ 	do n = 1, num_ind_mags-1
  		write(20,'(1f12.4)',advance='no') phiT(n,t) 
 	enddo
-	 	write(20,'(1f12.4)',advance='yes') phiT(Nk,t) 
+	 	write(20,'(1f12.4)',advance='yes') phiT(num_ind_mags,t) 
  enddo
  close(20)
 
@@ -421,8 +535,8 @@ write(21,'(a)') '@ legend loctype view '
 write(21,'(a)') '@ legend 0.78, 0.8'
 write(21,'(a)') '@ legend length 2'
 write(21,'(a)') '@ s0 legend \" ", "\"" '
- do i = 1, Nk
- 	write(21,'(1f10.4,2f16.4)')  k(i), chik0(i), chik0_self(n)
+ do i = 1, num_ind_mags
+ 	write(21,'(1f10.4,3f16.4)')  magk_tr(i), chik0_tr(i), chik0_self_tr(i), chik0_tr(i) - chik0_self_tr(i)
  enddo
  close(21)
 
@@ -438,8 +552,8 @@ write(21,'(a)') '@ s0 legend \" ", "\"" '
  write(17,'(a)') '@ legend 0.78, 0.8'
  write(17,'(a)') '@ legend length 2'
  write(17,'(a)') '@ s0 legend \" ", "\"" '
- do i = 1, Nk
- 	write(17,'(1f10.4,2f16.4)')  k(i), 1/(1-chik0(i))
+ do i = 1, num_ind_mags
+ 	write(17,'(1f10.4,2f16.4)')  magk_tr(i), 1/(1-chik0_tr(i))
  enddo
  close(17)
 
@@ -455,8 +569,8 @@ write(21,'(a)') '@ s0 legend \" ", "\"" '
  write(18,'(a)') '@ legend 0.78, 0.8'
  write(18,'(a)') '@ legend length 2'
  write(18,'(a)') '@ s0 legend \" ", "\"" '
- do i = 1, Nk
- 	write(18,'(1f10.4,2f16.4)')  k(i), eps0T(i), chik0T(i)
+ do i = 1, num_ind_mags
+ 	write(18,'(1f10.4,2f16.4)')  magk_tr(i), eps0T_tr(i), chik0T_tr(i)
  enddo
  close(18)
 
@@ -474,8 +588,8 @@ write(21,'(a)') '@ s0 legend \" ", "\"" '
  write(18,'(a)') '@ legend 0.78, 0.8'
  write(18,'(a)') '@ legend length 2'
  write(18,'(a)') '@ s0 legend \" ", "\"" '
- do i = 1, Nk
- 	write(18,'(1f10.4,2f16.4)')  k(i), str_fac(i)
+ do i = 1, num_ind_mags
+ 	write(18,'(1f10.4,2f16.4)')  magk_tr(i), str_fac_tr(i)
  enddo
  close(18)
 
@@ -515,26 +629,68 @@ write(21,'(a)') '@ s0 legend \" ", "\"" '
  write(20,'(a)') '@ legend length 4 '
  write(20,'(a)') '@ legend vgap 1  '
  write(20,'(a)') '@ legend hgap 0 '
- write(20,'(a,1I2)') '@ legend length ', Nk
-do i = 1, Nk
+ write(20,'(a,1I2)') '@ legend length ', num_ind_mags
+do i = 1, num_ind_mags
 	if (i .lt. 10) then 
- 		write(20,'(a,I1,a,1f6.2,a,1f6.2,a)') '@ s', i, ' legend "k = ', k(i) ,'\cE\C\S-1\N \f{Symbol}l\f{Times-Roman} =', (2.0*pi)/k(i),'\cE\C" '
+ 		write(20,'(a,I1,a,1f6.2,a,1f6.2,a)') '@ s', i, ' legend "k = ', magk_tr(i) ,'\cE\C\S-1\N \f{Symbol}l\f{Times-Roman} =', (2.0*pi)/magk_tr(i),'\cE\C" '
 	else
- 		write(20,'(a,I2,a,1f6.2,a,1f6.2,a)') '@ s', i, ' legend "k =', k(i) ,'\cE\C\S-1\N \f{Symbol}l\f{Times-Roman} =', (2.0*pi)/k(i),'\cE\C" '
+ 		write(20,'(a,I2,a,1f6.2,a,1f6.2,a)') '@ s', i, ' legend "k =', magk_tr(i) ,'\cE\C\S-1\N \f{Symbol}l\f{Times-Roman} =', (2.0*pi)/magk_tr(i),'\cE\C" '
 	endif
 enddo
 
 
  do w = 1, Nw
 	write(20,'(1ES12.3)',advance='no') omegas(w)*100.0/2.99792458d0 !convert to cm^-1 
- 	do n = 1, Nk-1
+ 	do n = 1, num_ind_mags-1
  		write(20,'(1f15.6)',advance='no') chikw(n,w) 
 	enddo
-	 	write(20,'(1f15.6)',advance='yes') chikw(Nk,w) 
+	 	write(20,'(1f15.6)',advance='yes') chikw(num_ind_mags,w) 
  enddo
  close(20)
 
 end subroutine write_out
 
 
+
+
+SUBROUTINE Bubble_Sort(magk, a, Nk, max_num_kvecs)
+ Implicit None 
+  Integer, intent(in) :: Nk, max_num_kvecs
+  REAL(8), INTENT(inout), DIMENSION(Nk) :: magk
+  real(8), intent(inout), Dimension(3,max_num_kvecs) :: a
+  REAL(8) :: temp
+  REAL(8), dimension(3) :: temp2
+  INTEGER :: i, j
+  LOGICAL :: swapped = .TRUE.
+ 
+  DO j = SIZE(magk)-1, 1, -1
+    swapped = .FALSE.
+    DO i = 1, j
+      IF (magk(i) > magk(i+1)) THEN
+
+        temp = magk(i)
+        magk(i) = magk(i+1)
+        magk(i+1) = temp
+
+        temp2 = a(:,i)
+        a(:,i) = a(:,i+1)
+        a(:,i+1) = temp2
+
+        swapped = .TRUE.
+      END IF
+    END DO
+    IF (.NOT. swapped) EXIT
+  END DO
+END SUBROUTINE Bubble_Sort
+
+
+
+
+
+
 end module main_stuff
+
+
+
+
+

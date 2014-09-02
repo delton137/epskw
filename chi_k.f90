@@ -16,7 +16,6 @@ subroutine calc_chik
  Implicit none 
 
 do n = 1, Nk 
-	do ix = 1,3
 		tmpOr = 0 
 		tmpOc = 0
 		tmpHr = 0
@@ -24,15 +23,17 @@ do n = 1, Nk
 		!longitudinal part 
 		do i = 1, Nmol
 			!Oxygens 
-			Orp = dcos( k(n)*Oxy(ix,i) )
-			Ocp = dsin( k(n)*Oxy(ix,i) ) 
+			Orp = dcos( dot_product(kvec(:,n),Oxy(:,i)) )
+			Ocp = dsin( dot_product(kvec(:,n),Oxy(:,i)) ) 
 
 			tmpOr = tmpOr + Orp 
 			tmpOc = tmpOc + Ocp
  
 			!Hydrogens
-			Hrp = dcos( k(n)*Hydro(ix,2*i-0) ) + dcos( k(n)*Hydro(ix,2*i-1) )
-			Hcp = dsin( k(n)*Hydro(ix,2*i-0) ) + dsin( k(n)*Hydro(ix,2*i-1) )	
+			Hrp = dcos( dot_product(kvec(:,n),Hydro(:,2*i-0)) )  & 
+			    + dcos( dot_product(kvec(:,n),Hydro(:,2*i-1)) )
+			Hcp = dsin( dot_product(kvec(:,n),Hydro(:,2*i-0)) )  &
+			    + dsin( dot_product(kvec(:,n),Hydro(:,2*i-1)) )	
 
 			tmpHr = tmpHr + Hrp
 			tmpHc = tmpHc + Hcp	
@@ -46,7 +47,6 @@ do n = 1, Nk
 		chik0(n)   = chik0(n)   + (qO*tmpOr + qH*tmpHr)**2 +  (qO*tmpOc + qH*tmpHc)**2
 
 		str_fackt(n,t) = str_fackt(n,t) +  (tmpOr    +    tmpHr)**2 +  (tmpOc    +    tmpHc)**2
-	enddo
 enddo
 
 
@@ -61,55 +61,49 @@ subroutine calc_chik_transverse
  use main_stuff
  Implicit none 
  real(8), dimension(3) :: rCM, raj
- real(8) :: magraj, q
+ real(8) :: magraj, q, kdotr
  double complex, dimension(3) :: mPol !polarization vector for molecule
  double complex, dimension(3) :: Pol !total polarization vector at that k
 
+
 do n = 1, Nk 
+	Pol = 0
+	do i = 1, Nmol
+		rCM = (16d0*Oxy(:,i) +  Hydro(:,2*i)  + Hydro(:,2*i-1))/18d0
+		mPol = 0
+		do j = 1,3
+			if (j .eq. 1) raj = Oxy(:,i) - rCM
+			if (j .eq. 2) raj = Hydro(:,2*i-0) - rCM
+			if (j .eq. 3) raj = Hydro(:,2*i-1) - rCM
+			if (j .eq. 1) q = qO
+			if (j .eq. 2) q = qH
+			if (j .eq. 3) q = qH
 
-	!transverse part
-	do ix = 1,3
-
-		Pol = 0
-		do i = 1, Nmol
-			rCM = (16d0*Oxy(:,i) +  Hydro(:,2*i)  + Hydro(:,2*i-1))/18d0
-
-			mPol = 0
-			do j = 1,3
-				if (j .eq. 1) raj = Oxy(:,i) - rCM
-				if (j .eq. 2) raj = Hydro(:,2*i-0) - rCM
-				if (j .eq. 3) raj = Hydro(:,2*i-1) - rCM
-				if (j .eq. 1) q = qO
-				if (j .eq. 2) q = qH
-				if (j .eq. 3) q = qH
-
-				if (raj(ix) /= 0.0) then
-					mPol = mPol - dcmplx(0, 1)*( q*raj/(k(n)*raj(ix)) )*( exp( dcmplx(0, 1)*k(n)*raj(ix) ) - (1d0,1d0) ) 
-				endif
-
-			enddo 
-
-			if (Pol(1) /= Pol(1) ) then
-				write(*,*) "ERROR in transverse polarization!! NaN"
-				write(*,*) "i  ", i
-				write(*,*) "j  ", j
-				write(*,*) "ix ", ix
-				write(*,*) "n ", n
-				write(*,*) "Pol = ", Pol
-				write(*,*) "mPol = ", mPol
-				write(*,*) "product ",  mPol*cmplx( dcos(k(n)*rCM(ix)),  -dsin(k(n)*rCM(ix)) )
+			kdotr = dot_product(kvec(:,n),raj)
+			if (kdotr /= 0.0) then
+				mPol = mPol - dcmplx(0, 1)*( q*raj/kdotr )*( exp( dcmplx(0, 1)*kdotr ) - 1d0 ) 
 			endif
-			Pol = Pol + mPol*cmplx( dcos(k(n)*rCM(ix)),  -dsin(k(n)*rCM(ix)) )
-		
 
-		enddo
+		enddo !j = 1,3
+
+		if (mPol(1) /= mPol(1) ) then
+			write(*,*) "ERROR in transverse polarization!! NaN Debug Info:"
+			write(*,*) "molecule ", i
+			write(*,*) "atom ", j
+			write(*,*) "n ", n
+			write(*,*) "Pol = ", Pol
+			write(*,*) "mPol = ", mPol
+		endif
+
+		kdotr = dot_product(kvec(:,n),rCM)
+
+		Pol = Pol + mPol*exp( dcmplx(0, -1)*kdotr )
+
+	enddo! i = 1, Nmol
  		
-		if (ix .eq. 1) PolTkt(n,t,:) = PolTkt(n,t,:) + cross_product((/ k(n), 0d0,  0d0 /) , Pol)
-		if (ix .eq. 2) PolTkt(n,t,:) = PolTkt(n,t,:) + cross_product((/ 0d0 , k(n), 0d0 /) , Pol)
-		if (ix .eq. 3) PolTkt(n,t,:) = PolTkt(n,t,:) + cross_product((/ 0d0 , 0d0, k(n) /) , Pol)
-	enddo
+	PolTkt(n,t,:) = cross_product(kvec(:,n) , Pol)
 
-enddo
+enddo! n = 1, Nk 
 
 
 end subroutine calc_chik_transverse
