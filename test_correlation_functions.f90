@@ -1,3 +1,4 @@
+!Utility code to test the correlation functions
 program test_correlation_functions 
  use correlation_function
  Implicit none

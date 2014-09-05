@@ -18,7 +18,7 @@ real(8),dimension(:)  ,allocatable ::  chik0,   chik0_self, chik0_distinct
 real(8),dimension(:)  ,allocatable ::  chik0T_tr, eps0T_tr, str_fac
 real(8),dimension(:)  ,allocatable :: magk_tr, chik0_tr, chik0_self_tr 
 real(8),dimension(:)  ,allocatable :: str_fac_tr, chik0_err, str_fac_err
-real(8),dimension(:,:),allocatable ::  phiL, phiT, chikw, chikT, str_fackt, str_fackt_tr
+real(8),dimension(:,:),allocatable ::  phiL, phiT, chikw, chikwT, chikT, str_fackt, str_fackt_tr
 double complex, dimension(:,:), allocatable :: rhokt, rhokt_tr
 double complex, dimension(:,:,:), allocatable :: polTkt, polTkt_tr
 real(8), dimension(:),allocatable :: qHs, qOs
@@ -38,6 +38,9 @@ real(8), parameter :: eps_0 = 8.85418781d-12 ! F/m = C^2/Jul/m
 real(8), parameter :: a2m = 1e-10 ! ang to meters
 real(8), parameter :: e2C = 1.60217657d-19 !electron charge in C
 real(8), parameter :: mole = 6.0221413d+23 !a mole
+real(8), parameter :: Cspeed=3.00d10 ! cm/s
+real(8), parameter :: hbar=6.626d-34 ! J*s
+real(8), parameter :: ps2s=1d-12! 1fs in s
 real(8) :: rHH, rMH
 !Variables for reading XTC
  character(len=3) :: filetype    
@@ -522,7 +525,6 @@ enddo
  close(20)
 
 
-
 !-------------------------------------------------------------------------------
  open(21,file=trim(fileheader)//"_chik.dat",status="unknown")
 write(21,'(a)') '# This .xvg is formated for xmgrace '
@@ -539,6 +541,39 @@ write(21,'(a)') '@ s0 legend \" ", "\"" '
  	write(21,'(1f10.4,3f16.4)')  magk_tr(i), chik0_tr(i), chik0_self_tr(i), chik0_tr(i) - chik0_self_tr(i)
  enddo
  close(21)
+
+!-------------------------------------------------------------------------------
+ open(20,file=trim(fileheader)//"_phikL_raw.dat",status="unknown")
+ do t = 1, nsteps/2
+	write(20,'(1ES12.3)',advance='no') real(t-1)*timestep 
+ 	do n = 1, num_ind_mags-1
+ 		write(20,'(1f12.4)',advance='no') phiL(n,t) 
+	enddo
+	 	write(20,'(1f12.4)',advance='yes') phiL(num_ind_mags,t) 
+ enddo
+ close(20)
+
+!-------------------------------------------------------------------------------
+ open(20,file=trim(fileheader)//"_phikT_raw.dat",status="unknown")
+ do t = 1, nsteps/2
+	write(20,'(1ES12.3)',advance='no') real(t-1)*timestep 
+ 	do n = 1, num_ind_mags-1
+ 		write(20,'(1f12.4)',advance='no') phiT(n,t) 
+	enddo
+	 	write(20,'(1f12.4)',advance='yes') phiT(num_ind_mags,t) 
+ enddo
+ close(20)
+
+
+
+!-------------------------------------------------------------------------------
+ open(21,file=trim(fileheader)//"_chik.dat",status="unknown")
+ do i = 1, num_ind_mags
+ 	write(21,'(1f10.4,1f16.4)')  magk_tr(i), chik0_tr(i)
+ enddo
+ close(21)
+
+
 
 !-------------------------------------------------------------------------------
  open(17,file=trim(fileheader)//"_epsk.dat",status="unknown")
@@ -580,7 +615,7 @@ write(21,'(a)') '@ s0 legend \" ", "\"" '
  open(18,file=trim(fileheader)//"_str_fac.dat",status="unknown")
  write(18,'(a)') '# This .xvg is formated for xmgrace "'
  write(18,'(a)') '@ xaxis  label "k(\cE\C\S-1\N)" '
- write(18,'(a)') '@ yaxis  label "\f{Symbol}S\f{Times-Roman}(k,0)" '
+ write(18,'(a)') '@ yaxis  label "S\smol\N(k,0)" '
  write(18,'(a)') '@ TYPE nxy '
  write(18,'(a)') '@ legend on '
  write(18,'(a)') '@ legend box off '
@@ -596,7 +631,62 @@ write(21,'(a)') '@ s0 legend \" ", "\"" '
 
 
 !-------------------------------------------------------------------------------
- open(20,file=trim(fileheader)//"_chikw.dat",status="unknown")
+ open(20,file=trim(fileheader)//"_chikwL.dat",status="unknown")
+
+ write(20,'(a)') '# This .xvg is formated for xmgrace "'
+ write(20,'(a)') '@map color 0 to (255, 255, 255), "white"  '
+ write(20,'(a)') '@map color 1 to (0, 0, 0), "black"  '
+ write(20,'(a)') '@map color 2 to (255, 0, 0), "red"  '
+ write(20,'(a)') '@map color 3 to (255, 165, 0), "orange" '   
+ write(20,'(a)') '@map color 4 to (255, 255, 0), "yellow" '
+ write(20,'(a)') '@map color 5 to (0, 139, 0), "green4"   '
+ write(20,'(a)') '@map color 6 to (0, 255, 0), "green"    '
+ write(20,'(a)') '@map color 7 to (0,   0, 255), "blue"   '
+ write(20,'(a)') '@map color 8 to (0, 255, 255), "cyan"    '
+ write(20,'(a)') '@map color 9 to (255, 0, 255), "magenta" '
+ write(20,'(a)') '@map color 10 to (148, 0, 211), "violet" '
+ write(20,'(a)') '@map color 11 to (188, 143, 143), "brown" '
+ write(20,'(a)') '@map color 12 to (220, 220, 220), "grey" '
+ write(20,'(a)') '@map color 13 to (103, 7, 72), "maroon"  '
+ write(20,'(a)') '@map color 14 to (64, 224, 208), "turquoise" '
+ write(20,'(a)') '@ xaxis label "\f{Symbol} w \f{Times-Roman}(cm\S-1\N)" '
+ write(20,'(a)') '@ yaxis label "Im{ \f{Symbol}c\f{Times-Roman}\sL\N(k,\f{Symbol}w\f{Times-Roman})}" '
+ write(20,'(a)') '@ xaxes scale Logarithmic '
+ write(20,'(a)') '@ yaxes scale Normal '
+ write(20,'(a)') '@TYPE xy '
+ write(20,'(a)') '@ view 0.100000, 0.150000, 0.900000, 0.850000 '
+ write(20,'(a)') '@ legend on '
+ write(20,'(a)') '@ legend box off '
+ write(20,'(a)') '@ legend loctype view '
+ write(20,'(a)') '@ legend 0.93, 0.85'
+ write(20,'(a)') '@ legend char size 0.890000 '
+ write(20,'(a)') '@ legend color 1  '
+ write(20,'(a)') '@ legend length 4 '
+ write(20,'(a)') '@ legend vgap 1  '
+ write(20,'(a)') '@ legend hgap 0 '
+ write(20,'(a,1I2)') '@ legend length ', num_ind_mags
+do i = 1, num_ind_mags
+	if (i .lt. 10) then 
+ 		write(20,'(a,I1,a,1f6.2,a,1f6.2,a)') '@ s', i, ' legend "k = ', magk_tr(i) ,'\cE\C\S-1\N \f{Symbol}l\f{Times-Roman} =', (2.0*pi)/magk_tr(i),'\cE\C" '
+	else
+ 		write(20,'(a,I2,a,1f6.2,a,1f6.2,a)') '@ s', i, ' legend "k =', magk_tr(i) ,'\cE\C\S-1\N \f{Symbol}l\f{Times-Roman} =', (2.0*pi)/magk_tr(i),'\cE\C" '
+	endif
+enddo
+
+
+ do w = 1, Nw
+	write(20,'(1ES12.3)',advance='no') omegas(w)*100.0/2.99792458d0 !convert to cm^-1 
+ 	do n = 1, num_ind_mags-1
+ 		write(20,'(1f)',advance='no') chikw(n,w) 
+	enddo
+	 	write(20,'(1f)',advance='yes') chikw(num_ind_mags,w) 
+ enddo
+ close(20)
+
+
+
+!-------------------------------------------------------------------------------
+ open(20,file=trim(fileheader)//"_chikwT.dat",status="unknown")
 
  write(20,'(a)') '# This .xvg is formated for xmgrace "'
  write(20,'(a)') '@map color 0 to (255, 255, 255), "white"  '
@@ -642,13 +732,15 @@ enddo
  do w = 1, Nw
 	write(20,'(1ES12.3)',advance='no') omegas(w)*100.0/2.99792458d0 !convert to cm^-1 
  	do n = 1, num_ind_mags-1
- 		write(20,'(1f15.6)',advance='no') chikw(n,w) 
+ 		write(20,'(1f15.6)',advance='no') chikwT(n,w) 
 	enddo
-	 	write(20,'(1f15.6)',advance='yes') chikw(num_ind_mags,w) 
+	 	write(20,'(1f15.6)',advance='yes') chikwT(num_ind_mags,w) 
  enddo
  close(20)
 
 end subroutine write_out
+
+
 
 
 
@@ -682,6 +774,50 @@ SUBROUTINE Bubble_Sort(magk, a, Nk, max_num_kvecs)
     IF (.NOT. swapped) EXIT
   END DO
 END SUBROUTINE Bubble_Sort
+
+
+
+Subroutine calc_Imagkw
+ Implicit none 
+ real(8) :: avgMag, omega
+ Integer :: NumAvgOver, PointsAvailable, MaxFreqOut
+ complex , dimension(nsteps) :: aux1
+
+ 
+
+ PointsAvailable = nsteps	
+ !write(*,*) "points available = ", PointsAvailable
+
+ if (PointsAvailable .lt. Nw) Nw = PointsAvailable
+		
+ NumAvgOver = PointsAvailable/Nw 
+
+ write(*,*) "Averaging over", NumAvgOver
+
+ do n = 1, Nk 
+	!Fourier transform the ACF
+	aux1 = cmplx(phiL(n,:))
+	call four1(aux1,nsteps,-1)
+
+	!smoothing (simple window average) to remove noise
+	Do t = 0, Nw-1
+
+		avgMag = 0 
+  		do i = 1, NumAvgOver
+			omega=2d0*3.1415926d0*( t*NumAvgOver+i )/(timestep*nsteps*ps2s) !get freq in 1/s (Hz)
+			avgMag = avgMag + omega*real(aux1(t*NumAvgOver+i)) 
+ 		enddo
+	  	chikw(n, t) = avgMag/real(NumAvgOver)
+		omegas(t) = ( floor((t+.5)*numAvgOver) )/(timestep*nsteps*ps2s)    !get central freq in 1/s (Hz
+		
+	enddo
+	chikw(n,:) = chik0(n)*(chikw(n,:) - 1d0)
+ enddo
+
+ omegas = omegas/Cspeed  	! convert frequency to cm-1
+
+
+end subroutine calc_Imagkw
 
 
 
