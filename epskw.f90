@@ -80,21 +80,21 @@ enddo
 !--------------------------------------------------------------------------------- 
 !----------------  Compute autocorrelation functions ---------------------------- 
 !--------------------------------------------------------------------------------- 
- allocate(phiTcomponent(nsteps))
- allocate(phiL(Nk,nsteps))
- allocate(phiT(Nk,nsteps))
+ allocate(phiTcomponent(nsteps_out))
+ allocate(phiL(Nk,nsteps_out))
+ allocate(phiT(Nk,nsteps_out))
 
  phiL = 0 
  phiT = 0 
  phiTcomponent = 0 
 
  do i = 1, Nk
-	!call simple_complex_corr_function(rhokt_tr(i,1:nsteps), phiL(i,1:nsteps), nsteps, nsteps)
-	call calc_corr_function(rhokt_tr(i,1:nsteps), phiL(i,1:nsteps), nsteps) 
+	call simple_complex_corr_function(rhokt_tr(i,1:nsteps), phiL(i,1:nsteps_out), nsteps, nsteps_out)
+	!call calc_corr_function(rhokt_tr(i,1:nsteps), phiL(i,1:nsteps), nsteps) 
 
 	do ix = 1,3
-		!call simple_complex_corr_function(PolTkt_tr(i,1:nsteps,ix), phiTcomponent, nsteps, nsteps)
-		call calc_corr_function(PolTkt_tr(i,1:nsteps,ix), phiTcomponent, nsteps) 
+		call simple_complex_corr_function(PolTkt_tr(i,1:nsteps,ix), phiTcomponent, nsteps, nsteps_out)
+		!call calc_corr_function(PolTkt_tr(i,1:nsteps,ix), phiTcomponent, nsteps) 
 		phiT(i,:) = phiT(i,:) + phiTcomponent
 	enddo
  enddo
@@ -136,59 +136,8 @@ do n = 1, num_ind_mags
 	str_fac_tr(n) = sum(str_fackt_tr(n,1:nsteps)) 
 enddo
 
- 
 
-!-------------------------------------------------------------------------------
-!-------------  calculate Im{chi_L(k,w)} and Im{chi_T(k,w)}  -------------------
-!-------------------------------------------------------------------------------
-!set up frequencies 
-write(*,*) "calculating Im{chi(k,w)}"
-
-Nw = 2000
-allocate(chikw(Nk,Nw))
-allocate(omegas(Nw))
-allocate(chikwT(Nk,Nw))
-
-max_freq = 1d0/timestep 
-write(*,*) "max_frequency (ps^-1) = ", max_freq
-write(*,*) "max_frequency (cm^-1) = ", max_freq*(10.0/3.0)
-
-call calc_Imagkw
-
-!delta = (Log10(real(max_freq))-4)/Nw !span 4 orders of magnitude
-
-!do i = 2, Nw
-!	omegas(i) = 2d0*pi*(10d0**(dble(Nw - i)*delta))
-!enddo	
-!	omegas(1) = 0.0
-
-
-! chikw = 0d0
-
-!do i = 1, Nk
-!	do w = 1, Nw
-!		!calculate integral using Trapezoid rule (may be slightly more accurate)
-!		chikw(i,w)  = chikw(i,w)  + phiL(i,1)*dcos(omegas(w)*(0)*timestep)/2d0
-!		chikwT(i,w) = chikwT(i,w) + phiT(i,1)*dcos(omegas(w)*(0)*timestep)/2d0
-		
-!		do t = 2, nsteps
-!			chikw(i,w)  = chikw(i,w)  + phiL(i,t)*dcos(omegas(w)*(t-1)*timestep)
-!			chikwT(i,w) = chikwT(i,w) + phiT(i,t)*dcos(omegas(w)*(t-1)*timestep)
-!		enddo
-
-!		chikw(i,w)  = chikw(i,w) + phiL(i,nsteps)*dcos(omegas(w)*(nsteps)*timestep)/2d0
-!		chikwT(i,w) = chikw(i,w) + phiL(i,nsteps)*dcos(omegas(w)*(nsteps)*timestep)/2d0
-
-!		chikw(i,w)  = omegas(w)*chikw(i,w)*timestep
-!		chikwT(i,w) = omegas(w)*chikwT(i,w)*timestep
-!	enddo
-!	chikw(i,:) = chik0(i)*chikw(i,:)
-!	chikwT(i,:) = chik0(i)*chikwT(i,:)
-!enddo
-
-
-
-
+!call calc_Imagkw
 
  
 call write_out
