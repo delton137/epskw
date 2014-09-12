@@ -6,7 +6,7 @@ contains
 !-------------------------------------------------------------------------------
 !------------- Simple direct computation of the correlation function -----------
 !-------------------------------------------------------------------------------
-subroutine simple_complex_corr_function(input, ACF, nsteps, tcorr)
+subroutine simple_complex_corr_function(input, ACF, tcorr, nsteps)
  Implicit None 
  integer, intent(in) :: nsteps, tcorr
  double complex, dimension(nsteps), intent(in) :: input

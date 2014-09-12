@@ -253,21 +253,27 @@ subroutine setup_k_vectors
 
 if (SMALLKSET) then
 
-	Nk = 11*3
+	Nk = 17*3
 
 	n = 1
 	do ix = 1,3
 		kvec(ix,n+0)  =  1*mink(ix)
 		kvec(ix,n+1)  =  2*mink(ix)
-		kvec(ix,n+2)  =  3*mink(ix)
-		kvec(ix,n+3)  =  4*mink(ix)
-		kvec(ix,n+4)  =  floor(2d0/mink(ix))*mink(ix) 
-		kvec(ix,n+5)  =  floor(3d0/mink(ix))*mink(ix) 
-		kvec(ix,n+6)  =  floor(4d0/mink(ix))*mink(ix) 
-		kvec(ix,n+7)  =  floor(5d0/mink(ix))*mink(ix) 
-		kvec(ix,n+8)  =  floor(6d0/mink(ix))*mink(ix) 
-		kvec(ix,n+9)  =  floor(8d0/mink(ix))*mink(ix) 
-		kvec(ix,n+10) =  floor(10d0/mink(ix))*mink(ix) 
+		kvec(ix,n+2)  =  5*mink(ix)
+		kvec(ix,n+3)  =  floor(0.75d0/mink(ix))*mink(ix)  
+		kvec(ix,n+4)  =  floor(1.05d0/mink(ix))*mink(ix) 
+		kvec(ix,n+5)  =  floor(1.35d0/mink(ix))*mink(ix) 
+		kvec(ix,n+6)  =  floor(1.65d0/mink(ix))*mink(ix) 
+		kvec(ix,n+7)  =  floor(2.1d0/mink(ix))*mink(ix) 
+		kvec(ix,n+8)  =  floor(3d0/mink(ix))*mink(ix) 
+		kvec(ix,n+9)  =  floor(4.05d0/mink(ix))*mink(ix) 
+		kvec(ix,n+10) =  floor(5.1d0/mink(ix))*mink(ix) 
+		kvec(ix,n+10) =  floor(6.15d0/mink(ix))*mink(ix) 
+		kvec(ix,n+10) =  floor(7.2d0/mink(ix))*mink(ix) 
+		kvec(ix,n+10) =  floor(8.25d0/mink(ix))*mink(ix) 
+		kvec(ix,n+10) =  floor(9.3d0/mink(ix))*mink(ix) 
+		kvec(ix,n+10) =  floor(10.35d0/mink(ix))*mink(ix) 
+		kvec(ix,n+10) =  floor(11.4d0/mink(ix))*mink(ix) 
 
 		n = n + 11
 	enddo
