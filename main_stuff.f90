@@ -253,29 +253,33 @@ subroutine setup_k_vectors
 
 if (SMALLKSET) then
 
-	Nk = 17*3
+	Nk = 21*3
 
 	n = 1
 	do ix = 1,3
 		kvec(ix,n+0)  =  1d0*mink(ix)
 		kvec(ix,n+1)  =  2d0*mink(ix)
 		kvec(ix,n+2)  =  5d0*mink(ix)
-		kvec(ix,n+3)  =  floor(0.75d0/mink(ix))*mink(ix)  
-		kvec(ix,n+4)  =  floor(1.05d0/mink(ix))*mink(ix) 
-		kvec(ix,n+5)  =  floor(1.35d0/mink(ix))*mink(ix) 
-		kvec(ix,n+6)  =  floor(1.65d0/mink(ix))*mink(ix) 
-		kvec(ix,n+7)  =  floor(2.1d0/mink(ix))*mink(ix) 
-		kvec(ix,n+8)  =  floor(3.0d0/mink(ix))*mink(ix) 
-		kvec(ix,n+9)  =  floor(4.05d0/mink(ix))*mink(ix) 
-		kvec(ix,n+10) =  floor(5.1d0/mink(ix))*mink(ix) 
-		kvec(ix,n+11) =  floor(6.15d0/mink(ix))*mink(ix) 
-		kvec(ix,n+12) =  floor(7.2d0/mink(ix))*mink(ix) 
-		kvec(ix,n+13) =  floor(8.25d0/mink(ix))*mink(ix) 
-		kvec(ix,n+14) =  floor(9.3d0/mink(ix))*mink(ix) 
-		kvec(ix,n+15) =  floor(10.35d0/mink(ix))*mink(ix) 
-		kvec(ix,n+16) =  floor(11.4d0/mink(ix))*mink(ix) 
+		kvec(ix,n+3)  =  nint(0.75d0/mink(ix))*mink(ix)  
+		kvec(ix,n+4)  =  nint(1.05d0/mink(ix))*mink(ix) 
+		kvec(ix,n+5)  =  nint(1.35d0/mink(ix))*mink(ix) 
+		kvec(ix,n+6)  =  nint(1.65d0/mink(ix))*mink(ix) 
+		kvec(ix,n+7)  =  nint(1.8d0/mink(ix))*mink(ix) 
+		kvec(ix,n+8)  =  nint(1.95d0/mink(ix))*mink(ix) 
+		kvec(ix,n+9)  =  nint(2.1d0/mink(ix))*mink(ix) 
+		kvec(ix,n+10)  =  nint(2.25d0/mink(ix))*mink(ix) 
+		kvec(ix,n+11)  =  nint(2.55d0/mink(ix))*mink(ix) 
+		kvec(ix,n+12)  =  nint(3.0d0/mink(ix))*mink(ix) 
+		kvec(ix,n+13)  =  nint(4.05d0/mink(ix))*mink(ix) 
+		kvec(ix,n+14) =  nint(5.1d0/mink(ix))*mink(ix) 
+		kvec(ix,n+15) =  nint(6.15d0/mink(ix))*mink(ix) 
+		kvec(ix,n+16) =  nint(7.2d0/mink(ix))*mink(ix) 
+		kvec(ix,n+17) =  nint(8.25d0/mink(ix))*mink(ix) 
+		kvec(ix,n+18) =  nint(9.3d0/mink(ix))*mink(ix) 
+		kvec(ix,n+19) =  nint(10.35d0/mink(ix))*mink(ix) 
+		kvec(ix,n+20) =  nint(11.4d0/mink(ix))*mink(ix) 
 
-		n = n + 17
+		n = n + 21
 	enddo
 
 	mags(1:Nk) = sum(kvec(:,:),1)
