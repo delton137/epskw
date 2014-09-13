@@ -18,7 +18,7 @@ real(8),dimension(:)  ,allocatable ::  chik0,   chik0_self, chik0_distinct
 real(8),dimension(:)  ,allocatable ::  chik0T_tr, eps0T_tr, str_fac
 real(8),dimension(:)  ,allocatable :: magk_tr, chik0_tr, chik0_self_tr 
 real(8),dimension(:)  ,allocatable :: str_fac_tr, chik0_err, str_fac_err
-real(8),dimension(:,:),allocatable ::  phiL, phiT, chikw, chikwT, chikT, str_fackt, str_fackt_tr
+real(8),dimension(:,:),allocatable ::  phiL, phiT, phiL_tr, phiT_tr, chikw, chikwT, chikT, str_fackt, str_fackt_tr
 double complex, dimension(:,:), allocatable :: rhokt, rhokt_tr
 double complex, dimension(:,:,:), allocatable :: polTkt, polTkt_tr
 real(8), dimension(:),allocatable :: qHs, qOs
@@ -257,29 +257,31 @@ if (SMALLKSET) then
 
 	n = 1
 	do ix = 1,3
-		kvec(ix,n+0)  =  1*mink(ix)
-		kvec(ix,n+1)  =  2*mink(ix)
-		kvec(ix,n+2)  =  5*mink(ix)
+		kvec(ix,n+0)  =  1d0*mink(ix)
+		kvec(ix,n+1)  =  2d0*mink(ix)
+		kvec(ix,n+2)  =  5d0*mink(ix)
 		kvec(ix,n+3)  =  floor(0.75d0/mink(ix))*mink(ix)  
 		kvec(ix,n+4)  =  floor(1.05d0/mink(ix))*mink(ix) 
 		kvec(ix,n+5)  =  floor(1.35d0/mink(ix))*mink(ix) 
 		kvec(ix,n+6)  =  floor(1.65d0/mink(ix))*mink(ix) 
 		kvec(ix,n+7)  =  floor(2.1d0/mink(ix))*mink(ix) 
-		kvec(ix,n+8)  =  floor(3d0/mink(ix))*mink(ix) 
+		kvec(ix,n+8)  =  floor(3.0d0/mink(ix))*mink(ix) 
 		kvec(ix,n+9)  =  floor(4.05d0/mink(ix))*mink(ix) 
 		kvec(ix,n+10) =  floor(5.1d0/mink(ix))*mink(ix) 
-		kvec(ix,n+10) =  floor(6.15d0/mink(ix))*mink(ix) 
-		kvec(ix,n+10) =  floor(7.2d0/mink(ix))*mink(ix) 
-		kvec(ix,n+10) =  floor(8.25d0/mink(ix))*mink(ix) 
-		kvec(ix,n+10) =  floor(9.3d0/mink(ix))*mink(ix) 
-		kvec(ix,n+10) =  floor(10.35d0/mink(ix))*mink(ix) 
-		kvec(ix,n+10) =  floor(11.4d0/mink(ix))*mink(ix) 
+		kvec(ix,n+11) =  floor(6.15d0/mink(ix))*mink(ix) 
+		kvec(ix,n+12) =  floor(7.2d0/mink(ix))*mink(ix) 
+		kvec(ix,n+13) =  floor(8.25d0/mink(ix))*mink(ix) 
+		kvec(ix,n+14) =  floor(9.3d0/mink(ix))*mink(ix) 
+		kvec(ix,n+15) =  floor(10.35d0/mink(ix))*mink(ix) 
+		kvec(ix,n+16) =  floor(11.4d0/mink(ix))*mink(ix) 
 
-		n = n + 11
+		n = n + 17
 	enddo
 
-	mags(1:Nk) = sum(kvec(:,:),1)	
-
+	mags(1:Nk) = sum(kvec(:,:),1)
+	!do i = 1,Nk	
+	!	write(*,*) mags(i)
+	!enddo
 else
 
 
@@ -470,9 +472,9 @@ enddo
  do t = 1, nsteps_out
 	write(20,'(1ES12.3)',advance='no') real(t-1)*timestep 
  	do n = 1, num_ind_mags-1
- 		write(20,'(1f12.4)',advance='no') phiL(n,t) 
+ 		write(20,'(1f12.4)',advance='no') phiL_tr(n,t) 
 	enddo
-	 	write(20,'(1f12.4)',advance='yes') phiL(num_ind_mags,t) 
+	 	write(20,'(1f12.4)',advance='yes') phiL_tr(num_ind_mags,t) 
  enddo
  close(20)
 
@@ -525,9 +527,9 @@ enddo
  do t = 1, nsteps_out
 	write(20,'(1ES12.3)',advance='no') real(t-1)*timestep 
  	do n = 1, num_ind_mags-1
- 		write(20,'(1f12.4)',advance='no') phiT(n,t) 
+ 		write(20,'(1f12.4)',advance='no') phiT_tr(n,t) 
 	enddo
-	 	write(20,'(1f12.4)',advance='yes') phiT(num_ind_mags,t) 
+	 	write(20,'(1f12.4)',advance='yes') phiT_tr(num_ind_mags,t) 
  enddo
  close(20)
 
@@ -554,9 +556,9 @@ write(21,'(a)') '@ s0 legend \" ", "\"" '
  do t = 1, nsteps_out
 	write(20,'(1ES12.3)',advance='no') real(t-1)*timestep 
  	do n = 1, num_ind_mags-1
- 		write(20,'(1f12.4)',advance='no') phiL(n,t) 
+ 		write(20,'(1f12.4)',advance='no') phiL_tr(n,t) 
 	enddo
-	 	write(20,'(1f12.4)',advance='yes') phiL(num_ind_mags,t) 
+	 	write(20,'(1f12.4)',advance='yes') phiL_tr(num_ind_mags,t) 
  enddo
  close(20)
 
@@ -565,9 +567,9 @@ write(21,'(a)') '@ s0 legend \" ", "\"" '
  do t = 1, nsteps_out
 	write(20,'(1ES12.3)',advance='no') real(t-1)*timestep 
  	do n = 1, num_ind_mags-1
- 		write(20,'(1f12.4)',advance='no') phiT(n,t) 
+ 		write(20,'(1f12.4)',advance='no') phiT_tr(n,t) 
 	enddo
-	 	write(20,'(1f12.4)',advance='yes') phiT(num_ind_mags,t) 
+	 	write(20,'(1f12.4)',advance='yes') phiT_tr(num_ind_mags,t) 
  enddo
  close(20)
 
@@ -762,7 +764,7 @@ Subroutine calc_Imagkw
 
  !do n = 1, Nk 
 	!Fourier transform the ACF
-!	aux1 = cmplx(phiL(n,:))
+!	aux1 = cmplx(phiL_tr(n,:))
 !	call four1(aux1,nsteps,-1)
 
 	!smoothing (simple window average) to remove noise
@@ -798,16 +800,16 @@ Subroutine calc_Imagkw
 !do i = 1, Nk
 !	do w = 1, Nw
 !		!calculate integral using Trapezoid rule (may be slightly more accurate)
-!		chikw(i,w)  = chikw(i,w)  + phiL(i,1)*dcos(omegas(w)*(0)*timestep)/2d0
-!		chikwT(i,w) = chikwT(i,w) + phiT(i,1)*dcos(omegas(w)*(0)*timestep)/2d0
+!		chikw(i,w)  = chikw(i,w)  + phiL_tr(i,1)*dcos(omegas(w)*(0)*timestep)/2d0
+!		chikwT(i,w) = chikwT(i,w) + phiT_tr(i,1)*dcos(omegas(w)*(0)*timestep)/2d0
 		
 !		do t = 2, nsteps
-!			chikw(i,w)  = chikw(i,w)  + phiL(i,t)*dcos(omegas(w)*(t-1)*timestep)
-!			chikwT(i,w) = chikwT(i,w) + phiT(i,t)*dcos(omegas(w)*(t-1)*timestep)
+!			chikw(i,w)  = chikw(i,w)  + phiL_tr(i,t)*dcos(omegas(w)*(t-1)*timestep)
+!			chikwT(i,w) = chikwT(i,w) + phiT_tr(i,t)*dcos(omegas(w)*(t-1)*timestep)
 !		enddo
 
-!		chikw(i,w)  = chikw(i,w) + phiL(i,nsteps)*dcos(omegas(w)*(nsteps)*timestep)/2d0
-!		chikwT(i,w) = chikw(i,w) + phiL(i,nsteps)*dcos(omegas(w)*(nsteps)*timestep)/2d0
+!		chikw(i,w)  = chikw(i,w) + phiL_tr(i,nsteps)*dcos(omegas(w)*(nsteps)*timestep)/2d0
+!		chikwT(i,w) = chikw(i,w) + phiL_tr(i,nsteps)*dcos(omegas(w)*(nsteps)*timestep)/2d0
 
 !		chikw(i,w)  = omegas(w)*chikw(i,w)*timestep
 !		chikwT(i,w) = omegas(w)*chikwT(i,w)*timestep

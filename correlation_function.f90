@@ -6,7 +6,7 @@ contains
 !-------------------------------------------------------------------------------
 !------------- Simple direct computation of the correlation function -----------
 !-------------------------------------------------------------------------------
-subroutine simple_complex_corr_function(input, ACF, tcorr, nsteps)
+subroutine simple_complex_corr_function(input, ACF, nsteps, tcorr)
  Implicit None 
  integer, intent(in) :: nsteps, tcorr
  double complex, dimension(nsteps), intent(in) :: input
@@ -53,7 +53,7 @@ subroutine calc_corr_function(input,output,N)
 	allocate(input_padded(2*trun))
 	allocate(output_padded(2*trun))
 	allocate(transformed(2*trun))
-	allocate(transformed2(2*trun))
+	!allocate(transformed2(2*trun))
  endif 
 
  input_padded = 0 
@@ -62,10 +62,7 @@ subroutine calc_corr_function(input,output,N)
  call dfftw_plan_dft_1d_( plan, 2*N, input_padded, transformed, FFTW_FORWARD, FFTW_ESTIMATE )
  call dfftw_execute_dft( plan, input_padded, transformed )
 
- call dfftw_plan_dft_1d_( plan, 2*N, input_padded, transformed2, FFTW_FORWARD, FFTW_ESTIMATE )
- call dfftw_execute_dft( plan, conjg(input_padded), transformed2 )
-
- transformed = transformed*conjg(transformed2)
+ transformed = transformed*conjg(transformed)
 
  call dfftw_plan_dft_1d_( plan, 2*N, transformed, output_padded, FFTW_BACKWARD, FFTW_ESTIMATE )
  call dfftw_execute_dft( plan, transformed, output_padded)	

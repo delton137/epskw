@@ -38,12 +38,14 @@ subroutine truncate
  allocate(chik0_err(num_ind_mags))
  allocate(str_fac_err(num_ind_mags))
 
- allocate(str_fackt_tr(num_ind_mags,maxsteps))
- allocate(rhokt_tr(num_ind_mags,maxsteps))
- allocate(polTkt_tr(num_ind_mags,maxsteps,3))
+  allocate(str_fackt_tr(num_ind_mags,maxsteps))
+ ! allocate(rhokt_tr(num_ind_mags,maxsteps))
+ !allocate(polTkt_tr(num_ind_mags,maxsteps,3))
+ allocate(phiL_tr(num_ind_mags,nsteps_out))
+ allocate(phiT_tr(num_ind_mags,nsteps_out))
 
 
-
+ write(*,'(a)',advance='no') "truncating datasets .."
 !truncate all the results and figure out error bars for certain things
 ix = 1
 do n = 1, num_ind_mags
@@ -67,13 +69,15 @@ do n = 1, num_ind_mags
 	endif
 
 	str_fackt_tr(n,:) =  sum(str_fackt(ix:ix+num_this_mag(n)-1,:),1)/real(num_this_mag(n))  
-	rhokt_tr(n,:)     =  sum(rhokt(ix:ix+num_this_mag(n)-1,:),1)/real(num_this_mag(n))  
-	polTkt_tr(n,:,:)  =  sum(polTkt(ix:ix+num_this_mag(n)-1,:,:),1)/real(num_this_mag(n))  
+	!rhokt_tr(n,:)     =  sum(rhokt(ix:ix+num_this_mag(n)-1,:),1)/real(num_this_mag(n))  
+	!polTkt_tr(n,:,:)  =  sum(polTkt(ix:ix+num_this_mag(n)-1,:,:),1)/real(num_this_mag(n))  
+	phiL_tr(n,:) =  sum(phiL(ix:ix+num_this_mag(n)-1,1:nsteps_out),1)/real(num_this_mag(n))  
+	phiT_tr(n,:) =  sum(phiT(ix:ix+num_this_mag(n)-1,1:nsteps_out),1)/real(num_this_mag(n))  
 
 
 	ix = ix + num_this_mag(n)
 enddo
-
+ write(*,*) "... done"
 
 
 

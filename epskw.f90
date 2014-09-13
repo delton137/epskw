@@ -66,47 +66,48 @@ enddo
 1000 continue 
 
  write(*,*) "number of steps used: ", nsteps
-
-!--------------------------------------------------------------------------------- 
-!----------------  truncate results to k with different magnitudes -------------- 
-!--------------------------------------------------------------------------------- 
- write(*,'(a)',advance='no') "truncating stuff .."
- call truncate
- write(*,*) "... done"
-
- Nk = num_ind_mags !Nk changes here!!
-
+ if (nsteps_out .gt. nsteps) nsteps_out = nsteps
 
 !--------------------------------------------------------------------------------- 
 !----------------  Compute autocorrelation functions ---------------------------- 
 !--------------------------------------------------------------------------------- 
- allocate(phiTcomponent(nsteps_out))
- allocate(phiL(Nk,nsteps_out))
- allocate(phiT(Nk,nsteps_out))
+ write(*,'(a)',advance='no') "calculating correlation functions .."
+ allocate(phiTcomponent(nsteps))
+ allocate(phiL(Nk,nsteps))
+ allocate(phiT(Nk,nsteps))
 
  phiL = 0 
  phiT = 0 
  phiTcomponent = 0 
 
  do i = 1, Nk
-	call simple_complex_corr_function(rhokt_tr(i,1:nsteps), phiL(i,1:nsteps_out), nsteps, nsteps_out)
-	!call calc_corr_function(rhokt_tr(i,1:nsteps), phiL(i,1:nsteps), nsteps) 
+	!call simple_complex_corr_function(rhokt(i,1:nsteps), phiL(i,1:nsteps_out), nsteps, nsteps_out)
+	call calc_corr_function(rhokt(i,1:nsteps), phiL(i,1:nsteps), nsteps) 
 
 	do ix = 1,3
-		call simple_complex_corr_function(PolTkt_tr(i,1:nsteps,ix), phiTcomponent, nsteps, nsteps_out)
-		!call calc_corr_function(PolTkt_tr(i,1:nsteps,ix), phiTcomponent, nsteps) 
-		phiT(i,:) = phiT(i,:) + phiTcomponent
+		!call simple_complex_corr_function(PolTkt(i,1:nsteps,ix), phiTcomponent, nsteps, nsteps_out)
+		call calc_corr_function(PolTkt(i,1:nsteps,ix), phiTcomponent, nsteps) 
+		phiT(i,1:nsteps_out) = phiT(i,1:nsteps_out) + phiTcomponent(1:nsteps_out)
 	enddo
  enddo
+ write(*,*) "... done"
+
+
+!--------------------------------------------------------------------------------- 
+!----------------  truncate results to k with different magnitudes -------------- 
+!--------------------------------------------------------------------------------- 
+ call truncate
+
+ Nk = num_ind_mags !Nk changes here!!
 
  !save static transverse part 
- eps0T_tr  = phiT(:,1) 
+ eps0T_tr  = phiT_tr(:,1) 
 
 
 do n = 1, num_ind_mags
 	!2nd normalization of correlation fun
-	phiT(n,:) = phiT(n,:)/phiT(n,1)
-	phiL(n,:) = phiL(n,:)/phiL(n,1)
+	phiT_tr(n,:) = phiT_tr(n,:)/phiT_tr(n,1)
+	phiL_tr(n,:) = phiL_tr(n,:)/phiL_tr(n,1)
 enddo
 
 
@@ -117,11 +118,9 @@ enddo
  prefac = (e2C**2)/(eps_0*kb*temp*vol*a2m) 
 
  !prefactors
- !PolTkt_tr     = prefac*PolTkt/(dble(nsteps)) 
  chik0_tr      = prefac*chik0_tr/(dble(nsteps))  
  chik0_self_tr = prefac*chik0_self_tr/(dble(nsteps)) 
  str_fackt_tr  = str_fackt_tr/(dble(Nmol)*dble(nsteps))  
-
 
 
 do n = 1, num_ind_mags
@@ -136,9 +135,7 @@ do n = 1, num_ind_mags
 	str_fac_tr(n) = sum(str_fackt_tr(n,1:nsteps)) 
 enddo
 
-
 !call calc_Imagkw
-
  
 call write_out
 
