@@ -82,11 +82,13 @@ enddo
 
  do i = 1, Nk
 	!call simple_complex_corr_function(rhokt(i,1:nsteps), phiL(i,1:nsteps_out), nsteps, nsteps_out)
-	call calc_corr_function(rhokt(i,1:nsteps), phiL(i,1:nsteps), nsteps) 
+	!call calc_corr_function(rhokt(i,1:nsteps), phiL(i,1:nsteps), nsteps) 
+	call calc_corr_function2(rhokt(i,1:nsteps), phiL(i,1:nsteps), nsteps) 
 
 	do ix = 1,3
 		!call simple_complex_corr_function(PolTkt(i,1:nsteps,ix), phiTcomponent, nsteps, nsteps_out)
-		call calc_corr_function(PolTkt(i,1:nsteps,ix), phiTcomponent, nsteps) 
+		!call calc_corr_function(PolTkt(i,1:nsteps,ix), phiTcomponent, nsteps) 
+		call calc_corr_function2(PolTkt(i,1:nsteps,ix), phiTcomponent, nsteps) 
 		phiT(i,1:nsteps_out) = phiT(i,1:nsteps_out) + phiTcomponent(1:nsteps_out)
 	enddo
  enddo

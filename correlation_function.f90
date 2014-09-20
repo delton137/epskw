@@ -36,6 +36,7 @@ end subroutine simple_complex_corr_function
 !--------------------------------------------------------------------------
 !----------------  calcuates correlation function using FFTW3 ------------
 !---------------- (this is much much faster, scales as n*log(n) ----------
+!---------------- calls to fftw3 have been commented out (library issues)-
 !--------------------------------------------------------------------------
 
 subroutine calc_corr_function(input,output,N)
@@ -59,13 +60,13 @@ subroutine calc_corr_function(input,output,N)
  input_padded = 0 
  input_padded(1:N) = input 
 
- call dfftw_plan_dft_1d_( plan, 2*N, input_padded, transformed, FFTW_FORWARD, FFTW_ESTIMATE )
- call dfftw_execute_dft( plan, input_padded, transformed )
+! call dfftw_plan_dft_1d_( plan, 2*N, input_padded, transformed, FFTW_FORWARD, FFTW_ESTIMATE )
+! call dfftw_execute_dft( plan, input_padded, transformed )
 
  transformed = transformed*conjg(transformed)
 
- call dfftw_plan_dft_1d_( plan, 2*N, transformed, output_padded, FFTW_BACKWARD, FFTW_ESTIMATE )
- call dfftw_execute_dft( plan, transformed, output_padded)	
+! call dfftw_plan_dft_1d_( plan, 2*N, transformed, output_padded, FFTW_BACKWARD, FFTW_ESTIMATE )
+! call dfftw_execute_dft( plan, transformed, output_padded)	
 	
  output = dble(output_padded(1:N))/N 
 
@@ -86,44 +87,42 @@ end subroutine calc_corr_function
 !----------------  (proprietary code from Numerical Recipes) -----------
 !---------------- (has not been fully tested) --------------------------
 !------------------------------------------------------------------------ 
-!subroutine calc_coor_function2(input,output,N)
-! Implicit none
-! integer, intent(in) :: N
-! double complex, dimension(N), intent(in) :: input
-! real(8), dimension(N), intent(out) :: output
-! double complex, dimension(:), allocatable :: input_padded, transformed 
-! integer :: trun
- 
-!find closest power of 2 greater than number of steps
-!trun = 2**(    floor( dlog(  dble(nsteps) )/dlog(2d0)  )  + 1  )
+subroutine calc_corr_function2(input,output,N)
+ Implicit none
+ double complex, dimension(N), intent(in) :: input
+ real(8), dimension(N), intent(out) :: output
+ integer, intent(in) :: N
+ double complex, dimension(:), allocatable :: input_padded,  output_padded
+ complex, dimension(:), allocatable :: transformed
+ integer*8 :: plan=0, i, trun
+  
+ if (.not.(allocated(input_padded))) then 
+ 	!find closest power of 2 greater than number of steps
+ 	trun = 2**(    floor( dlog(  dble(N) )/dlog(2d0)  )  + 1  )
+	allocate(input_padded(2*trun))
+	allocate(output_padded(2*trun))
+	allocate(transformed(2*trun))
+ endif 
 
-! if (.not.(allocated(input_padded))) then 
-! 	!find closest power of 2 greater than number of steps
-!	allocate(input(2*trun))
-!	allocate(transformed(2*trun))
-! endif 
+ input_padded = 0 
+ input_padded(1:N) = input 
 
+ transformed = real(input_padded)
 
-! input_padded = 0 
-! input_padded(1:N) = input 
-      
-! call four1(input_padded,2*trun,1)
-         
-! transformed=input_padded*conjg(input_padded) 
+ call four1(transformed,2*trun,1)
 
-! call four1(transformed,2*trun,1)
-        
-! output(i,:) = real(transformed(1:nsteps))
+ transformed = transformed*conjg(transformed)
 
-!normalization 1
-!do i = 1, N-1
-!	output(i) = output(i)/(N-i)
-!enddo
+ call four1(transformed,2*trun,-1)
+	
+ output = dble(transformed(1:N))/N 
 
-!normalization 2
-!output = output/output(1)
-!
-!end subroutine calc_coor_function2
+ !normalization 1
+ do i = 1, N-1
+	output(i) = output(i)/(N-i)
+ enddo
+
+end subroutine calc_corr_function2
 
 
 

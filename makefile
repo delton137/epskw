@@ -8,11 +8,14 @@ default : epskw.x
 debug: FFLAGS += -debug -backtrace -traceback -check bounds
 debug: epskw.x
 	
-epskw.x: m_timer.o main_stuff.o truncate_datasets.o chi_k.o correlation_function.o epskw.o 
-	$(COMP) m_timer.o main_stuff.o truncate_datasets.o chi_k.o correlation_function.o libxdrf.a epskw.o  $(FFLAGS) $(FFTW) -o epskw.x 
+epskw.x: m_timer.o four1.o main_stuff.o truncate_datasets.o chi_k.o correlation_function.o epskw.o 
+	$(COMP) m_timer.o four1.o main_stuff.o truncate_datasets.o chi_k.o correlation_function.o libxdrf.a epskw.o  $(FFLAGS) $(FFTW) -o epskw.x 
 
 m_timer.o: m_timer.f90
 	$(COMP) -c m_timer.f90 $(FFLAGS) 
+
+four1.o: four1.f
+	$(COMP) -c four1.f $(FFLAGS) 
 
 main_stuff.o: main_stuff.f90
 	$(COMP) -c main_stuff.f90 $(FFLAGS) 
@@ -28,7 +31,6 @@ correlation_function.o: correlation_function.f90
 
 epskw.o: epskw.f90
 	$(COMP) -c epskw.f90 $(FFLAGS) 
-
 
 clean:
 	rm -rf *.o

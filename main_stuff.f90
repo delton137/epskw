@@ -2,11 +2,11 @@
 Module main_stuff
  Implicit none 
 !-- kvec stuff --------------
-integer, parameter :: max_num_kvecs=2000
+integer, parameter :: max_num_kvecs=10000
 real(8),dimension(3,max_num_kvecs) :: kvec
-real(8),dimension(2000) :: mags
+real(8),dimension(max_num_kvecs) :: mags
 real(8),dimension(:), allocatable :: magk
-integer, dimension(2000) :: num_this_mag=0
+integer, dimension(max_num_kvecs) :: num_this_mag=0
 integer :: num_ind_mags
 real(8), dimension(3) :: mink
 real(8) :: mag1
@@ -296,7 +296,6 @@ else
 		!if (i*mink(ix) .gt. 7) then
 			!at greater than k = 7 , k points become more sparse
 			!if (mod(4,i) .eq. 0) then	
-				!write(*,*) "derp"	
 				!kvec(ix,n) =  i*mink(ix)
 				!mags(n) = i*mink(ix)
 				!n = n + 1
@@ -310,21 +309,27 @@ else
  enddo
  write(*,*) "Using ", n-1, "k vectors parallel to the box edges"
 
- !construct diagonal k vectors
-! do i = 0,3
-!	do j = 0,3
-!		do k = 0,3
-!			if ( i+j+k .gt. 1) then
-!				mag1 = dsqrt( (i*mink(1))**2 + (j*mink(2))**2 + (k*mink(3))**2 )
-!				if ( (mag1 .lt. maxk) .and. (i+j+k .ne. 0 ) ) then
-!					kvec(:,n) = (/  i*mink(1), j*mink(2), k*mink(3) /)
-!					mags(n) = mag1
-!					n = n + 1
-!				endif
-!			endif
-!		enddo
-!	enddo
- !enddo
+!!construct diagonal k vectors
+ do i = 0,nint(5d0/mink(1)),3
+	do j = 0,nint(5d0/mink(2)),3
+		do k = 0,nint(5d0/mink(3)),3
+			if ( i+j+k .gt. 1) then
+				mag1 = dsqrt( (i*mink(1))**2 + (j*mink(2))**2 + (k*mink(3))**2 )
+				if ( (mag1 .lt. maxk) .and. (i+j+k .ne. 0 ) ) then
+					kvec(:,n) = (/  i*mink(1), j*mink(2), k*mink(3) /)
+					mags(n) = mag1
+					n = n + 1
+
+					if (n .gt. max_num_kvecs-1) then
+						write(*,*) "limit of 10,000 k vecs reached"
+						write(*,*) "code will be too slow/run out of memory if more are used"
+						stop
+					endif
+				endif
+			endif
+		enddo
+	enddo
+ enddo
  Nk = n - 1
 
 endif! (SMALLKSET)
@@ -466,7 +471,7 @@ subroutine write_out
  write(20,'(a)') '@ legend hgap 0 '
  write(20,'(a,1I2)') '@ legend length ', num_ind_mags
 do i = 1, num_ind_mags
-	if (i .lt. 10) then 
+	if (i .lt. 11) then 
  		write(20,'(a,I1,a,1f6.2,a,1f6.2,a)') '@ s', i-1, ' legend "k = ', magk_tr(i) ,'\cE\C\S-1\N \f{Symbol}l\f{Times-Roman} =', (2.0*pi)/magk_tr(i),'\cE\C" '
 	else
  		write(20,'(a,I2,a,1f6.2,a,1f6.2,a)') '@ s', i-1, ' legend "k =', magk_tr(i)  ,'\cE\C\S-1\N \f{Symbol}l\f{Times-Roman} =', (2.0*pi)/(i),'\cE\C" '
@@ -521,7 +526,7 @@ enddo
  write(20,'(a)') '@ legend hgap 0 '
  write(20,'(a,1I2)') '@ legend length ', num_ind_mags
 do i = 1, num_ind_mags
-	if (i .lt. 10) then 
+	if (i .lt. 11) then 
  		write(20,'(a,I1,a,1f6.2,a,1f6.2,a)') '@ s', i-1, ' legend "k = ', magk_tr(i) ,'\cE\C\S-1\N \f{Symbol}l\f{Times-Roman} =', (2.0*pi)/magk_tr(i),'\cE\C" '
 	else
  		write(20,'(a,I2,a,1f6.2,a,1f6.2,a)') '@ s', i-1, ' legend "k =', magk_tr(i) ,'\cE\C\S-1\N \f{Symbol}l\f{Times-Roman} =', (2.0*pi)/(i),'\cE\C" '
@@ -580,7 +585,7 @@ write(21,'(a)') '@ s0 legend \" ", "\"" '
 
 
 !-------------------------------------------------------------------------------
- open(21,file=trim(fileheader)//"_chik.dat",status="unknown")
+ open(21,file=trim(fileheader)//"_chik_raw.dat",status="unknown")
  do i = 1, num_ind_mags
  	write(21,'(1f10.4,1f16.4)')  magk_tr(i), chik0_tr(i)
  enddo
@@ -601,7 +606,7 @@ write(21,'(a)') '@ s0 legend \" ", "\"" '
  write(17,'(a)') '@ legend length 2'
  write(17,'(a)') '@ s0 legend \" ", "\"" '
  do i = 1, num_ind_mags
- 	write(17,'(1f10.4,2f16.4)')  magk_tr(i), 1/(1-chik0_tr(i))
+ 	write(17,'(1f10.4,2f16.4)')  magk_tr(i), 1d0 - 1d0/chik0_tr(i)
  enddo
  close(17)
 
@@ -679,7 +684,7 @@ write(21,'(a)') '@ s0 legend \" ", "\"" '
 ! write(20,'(a)') '@ legend hgap 0 '
 ! write(20,'(a,1I2)') '@ legend length ', num_ind_mags
 !do i = 1, num_ind_mags
-!	if (i .lt. 10) then 
+!	if (i .lt. 11) then 
 !		write(20,'(a,I1,a,1f6.2,a,1f6.2,a)') '@ s', i, ' legend "k = ', magk_tr(i) ,'\cE\C\S-1\N \f{Symbol}l\f{Times-Roman} =', (2.0*pi)/magk_tr(i),'\cE\C" '!
 !	else!
 ! 		write(20,'(a,I2,a,1f6.2,a,1f6.2,a)') '@ s', i, ' legend "k =', magk_tr(i) ,'\cE\C\S-1\N \f{Symbol}l\f{Times-Roman} =', (2.0*pi)/magk_tr(i),'\cE\C" '
