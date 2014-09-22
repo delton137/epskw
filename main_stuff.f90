@@ -314,8 +314,8 @@ else
 	do j = 0,nint(5d0/mink(2)),3
 		do k = 0,nint(5d0/mink(3)),3
 			if ( i+j+k .gt. 1) then
-				mag1 = dsqrt( (i*mink(1))**2 + (j*mink(2))**2 + (k*mink(3))**2 )
 				if ( (mag1 .lt. maxk) .and. (i+j+k .ne. 0 ) ) then
+				mag1 = dsqrt( (i*mink(1))**2 + (j*mink(2))**2 + (k*mink(3))**2 )
 					kvec(:,n) = (/  i*mink(1), j*mink(2), k*mink(3) /)
 					mags(n) = mag1
 					n = n + 1
@@ -615,7 +615,7 @@ write(21,'(a)') '@ s0 legend \" ", "\"" '
  write(18,'(a)') '# This .xvg is formated for xmgrace "'
  write(18,'(a)') '@ xaxis  label "k(\cE\C\S-1\N)" '
  write(18,'(a)') '@ yaxis  label "\f{Symbol}e\f{Times-Roman}(k,\f{Symbol}w\f{Times-Roman})" '
- write(18,'(a)') '@ TYPE nxy '
+ write(18,'(a)') '@ TYPE xy '
  write(18,'(a)') '@ legend on '
  write(18,'(a)') '@ legend box off '
  write(18,'(a)') '@ legend loctype view '
@@ -634,7 +634,7 @@ write(21,'(a)') '@ s0 legend \" ", "\"" '
  write(18,'(a)') '# This .xvg is formated for xmgrace "'
  write(18,'(a)') '@ xaxis  label "k(\cE\C\S-1\N)" '
  write(18,'(a)') '@ yaxis  label "S\smol\N(k,0)" '
- write(18,'(a)') '@ TYPE nxy '
+ write(18,'(a)') '@ TYPE xy '
  write(18,'(a)') '@ legend on '
  write(18,'(a)') '@ legend box off '
  write(18,'(a)') '@ legend loctype view '
