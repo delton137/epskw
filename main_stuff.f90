@@ -281,11 +281,25 @@ if (SMALLKSET) then
 
 		n = n + 21
 	enddo
+	!add some of the small diagonals to the small k - set ( the face diagonals are especially great, you get 12 different directions!) 
+
+      do i = 0,2
+	do j = 0,2
+		do k = 0,2
+			if ( i+j+k .gt. 1) then
+				if ( (mag1 .lt. maxk) .and. (i+j+k .ne. 0 ) ) then
+				       mag1 = dsqrt( (i*mink(1))**2 + (j*mink(2))**2 + (k*mink(3))**2 )
+					kvec(:,n) = (/  i*mink(1), j*mink(2), k*mink(3) /)
+					mags(n) = mag1
+					Nk = Nk + 1
+				endif
+			endif
+		enddo
+	enddo
+     enddo
 
 	mags(1:Nk) = sum(kvec(:,:),1)
-	!do i = 1,Nk	
-	!	write(*,*) mags(i)
-	!enddo
+
 else
 
 
@@ -293,18 +307,27 @@ else
  n = 1
  do ix = 1,3
  	do i = 1, max_num(ix)
-		!if (i*mink(ix) .gt. 7) then
-			!at greater than k = 7 , k points become more sparse
-			!if (mod(4,i) .eq. 0) then	
-				!kvec(ix,n) =  i*mink(ix)
-				!mags(n) = i*mink(ix)
-				!n = n + 1
-			!endif
-		!else 
+                if ((i*mink(ix) .gt. 4) .and. (i*mink(ix) .lt. 5)) then
+                        !between  k = 4 and k=5 , k points become more sparse
+                        if (mod(i,1) .eq. 0) then       
+                                kvec(ix,n) =  i*mink(ix)
+                                mags(n) = i*mink(ix)
+                                n = n + 1
+                        endif
+                endif
+                if (i*mink(ix) .gt. 5) then
+                        !at greater than k = 5 , k points become more sparse
+                        if (mod(i,2) .eq. 0) then
+                                kvec(ix,n) =  i*mink(ix)
+                                mags(n) = i*mink(ix)
+                !               write(*,*) "adding", mags(n)
+                                n = n + 1
+                        endif
+                else
 			kvec(ix,n) =  i*mink(ix)
 			mags(n) = i*mink(ix)
 			n = n + 1
-		!endif
+		endif
 	enddo 
  enddo
  write(*,*) "Using ", n-1, "k vectors parallel to the box edges"
@@ -534,7 +557,7 @@ do i = 1, num_ind_mags
 enddo
 
  do t = 1, nsteps_out
-	write(20,'(1ES12.3)',advance='no') real(t-1)*timestep 
+	write(20,'(1ES12.6)',advance='no') real(t-1)*timestep 
  	do n = 1, num_ind_mags-1
  		write(20,'(1f12.4)',advance='no') phiT_tr(n,t) 
 	enddo
