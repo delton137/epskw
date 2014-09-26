@@ -17,7 +17,7 @@ real(8),dimension(:)  ,allocatable :: omegas,  phiTcomponent
 real(8),dimension(:)  ,allocatable ::  chik0,   chik0_self, chik0_distinct
 real(8),dimension(:)  ,allocatable ::  chik0T_tr, eps0T_tr, str_fac
 real(8),dimension(:)  ,allocatable :: magk_tr, chik0_tr, chik0_self_tr 
-real(8),dimension(:)  ,allocatable :: str_fac_tr, chik0_err, str_fac_err
+real(8),dimension(:)  ,allocatable :: str_fac_tr, chik0_err_tr, str_fac_err
 real(8),dimension(:,:),allocatable ::  phiL, phiT, phiL_tr, phiT_tr, chikw, chikwT, chikT, str_fackt, str_fackt_tr
 double complex, dimension(:,:), allocatable :: rhokt, rhokt_tr
 double complex, dimension(:,:,:), allocatable :: polTkt, polTkt_tr
@@ -174,7 +174,6 @@ if (filetype .eq. "xyz") then
 	enddo
 	rewind(12)
 	close(12)
-	open(12,file=fileinp,status="old",action="read",iostat=ierror)
 
 	nsteps = floor(real(npts) / real((Na + 2)))! Number of timesteps
 	write(*,*) "there are ", nsteps, " steps in the file"
@@ -257,49 +256,47 @@ if (SMALLKSET) then
 
 	n = 1
 	do ix = 1,3
-		kvec(ix,n+0)  =  1d0*mink(ix)
-		kvec(ix,n+1)  =  2d0*mink(ix)
-		kvec(ix,n+2)  =  5d0*mink(ix)
-		kvec(ix,n+3)  =  nint(0.75d0/mink(ix))*mink(ix)  
-		kvec(ix,n+4)  =  nint(1.05d0/mink(ix))*mink(ix) 
-		kvec(ix,n+5)  =  nint(1.35d0/mink(ix))*mink(ix) 
-		kvec(ix,n+6)  =  nint(1.65d0/mink(ix))*mink(ix) 
-		kvec(ix,n+7)  =  nint(1.8d0/mink(ix))*mink(ix) 
-		kvec(ix,n+8)  =  nint(1.95d0/mink(ix))*mink(ix) 
-		kvec(ix,n+9)  =  nint(2.1d0/mink(ix))*mink(ix) 
-		kvec(ix,n+10)  =  nint(2.25d0/mink(ix))*mink(ix) 
-		kvec(ix,n+11)  =  nint(2.55d0/mink(ix))*mink(ix) 
-		kvec(ix,n+12)  =  nint(3.0d0/mink(ix))*mink(ix) 
-		kvec(ix,n+13)  =  nint(4.05d0/mink(ix))*mink(ix) 
-		kvec(ix,n+14) =  nint(5.1d0/mink(ix))*mink(ix) 
-		kvec(ix,n+15) =  nint(6.15d0/mink(ix))*mink(ix) 
-		kvec(ix,n+16) =  nint(7.2d0/mink(ix))*mink(ix) 
-		kvec(ix,n+17) =  nint(8.25d0/mink(ix))*mink(ix) 
-		kvec(ix,n+18) =  nint(9.3d0/mink(ix))*mink(ix) 
-		kvec(ix,n+19) =  nint(10.35d0/mink(ix))*mink(ix) 
-		kvec(ix,n+20) =  nint(11.4d0/mink(ix))*mink(ix) 
+		kvec(ix,n+0)  =  1d0*mink (ix)
+		kvec(ix,n+1)  =  2d0*mink (ix)
+		kvec(ix,n+2)  =  5d0*mink (ix)
+		kvec(ix,n+3)  =  nint(0.75d0/mink (ix))*mink (ix)  
+		kvec(ix,n+4)  =  nint(1.05d0/mink (ix))*mink (ix) 
+		kvec(ix,n+5)  =  nint(1.35d0/mink (ix))*mink (ix) 
+		kvec(ix,n+6)  =  nint(1.65d0/mink (ix))*mink (ix) 
+		kvec(ix,n+7)  =  nint(1.8d0/mink (ix))*mink (ix) 
+		kvec(ix,n+8)  =  nint(1.95d0/mink (ix))*mink (ix) 
+		kvec(ix,n+9)  =  nint(2.1d0/mink (ix))*mink (ix) 
+		kvec(ix,n+10)  =  nint(2.25d0/mink (ix))*mink (ix) 
+		kvec(ix,n+11)  =  nint(2.55d0/mink (ix))*mink (ix) 
+		kvec(ix,n+12)  =  nint(3.0d0/mink (ix))*mink (ix) 
+		kvec(ix,n+13)  =  nint(4.05d0/mink (ix))*mink (ix) 
+		kvec(ix,n+14) =  nint(5.1d0/mink (ix))*mink (ix) 
+		kvec(ix,n+15) =  nint(6.15d0/mink (ix))*mink (ix) 
+		kvec(ix,n+16) =  nint(7.2d0/mink (ix))*mink (ix) 
+		kvec(ix,n+17) =  nint(8.25d0/mink (ix))*mink (ix) 
+		kvec(ix,n+18) =  nint(9.3d0/mink (ix))*mink (ix) 
+		kvec(ix,n+19) =  nint(10.35d0/mink (ix))*mink (ix) 
+		kvec(ix,n+20) =  nint(11.4d0/mink (ix))*mink (ix) 
 
 		n = n + 21
 	enddo
-	!add some of the small diagonals to the small k - set ( the face diagonals are especially great, you get 12 different directions!) 
 
-      do i = 0,2
-	do j = 0,2
-		do k = 0,2
+     mags(1:Nk) = sum(kvec(:,:),1)
+
+      !add some of the small diagonals to the small k - set ( the face diagonals are especially great, you get 12 different directions!) 
+      do i = 0,1
+	do j = 0,1
+		do k = 0,1
 			if ( i+j+k .gt. 1) then
-				if ( (mag1 .lt. maxk) .and. (i+j+k .ne. 0 ) ) then
-				       mag1 = dsqrt( (i*mink(1))**2 + (j*mink(2))**2 + (k*mink(3))**2 )
-					kvec(:,n) = (/  i*mink(1), j*mink(2), k*mink(3) /)
-					mags(n) = mag1
-					Nk = Nk + 1
-				endif
+				mag1 = dsqrt( (i*mink (1))**2 + (j*mink (2))**2 + (k*mink (3))**2 )
+				kvec(:,n) = (/  i*mink (1), j*mink (2), k*mink (3) /)
+				mags(n) = mag1
+				Nk = Nk + 1
 			endif
 		enddo
 	enddo
      enddo
-
-	mags(1:Nk) = sum(kvec(:,:),1)
-
+	
 else
 
 
@@ -307,25 +304,25 @@ else
  n = 1
  do ix = 1,3
  	do i = 1, max_num(ix)
-                if ((i*mink(ix) .gt. 4) .and. (i*mink(ix) .lt. 5)) then
+                if ((i*mink (ix) .gt. 4) .and. (i*mink (ix) .lt. 5)) then
                         !between  k = 4 and k=5 , k points become more sparse
                         if (mod(i,1) .eq. 0) then       
-                                kvec(ix,n) =  i*mink(ix)
-                                mags(n) = i*mink(ix)
+                                kvec(ix,n) =  i*mink (ix)
+                                mags(n) = i*mink (ix)
                                 n = n + 1
                         endif
                 endif
-                if (i*mink(ix) .gt. 5) then
+                if (i*mink (ix) .gt. 5) then
                         !at greater than k = 5 , k points become more sparse
                         if (mod(i,2) .eq. 0) then
-                                kvec(ix,n) =  i*mink(ix)
-                                mags(n) = i*mink(ix)
+                                kvec(ix,n) =  i*mink (ix)
+                                mags(n) = i*mink (ix)
                 !               write(*,*) "adding", mags(n)
                                 n = n + 1
                         endif
                 else
-			kvec(ix,n) =  i*mink(ix)
-			mags(n) = i*mink(ix)
+			kvec(ix,n) =  i*mink (ix)
+			mags(n) = i*mink (ix)
 			n = n + 1
 		endif
 	enddo 
@@ -333,13 +330,13 @@ else
  write(*,*) "Using ", n-1, "k vectors parallel to the box edges"
 
 !!construct diagonal k vectors
- do i = 0,nint(5d0/mink(1)),3
-	do j = 0,nint(5d0/mink(2)),3
-		do k = 0,nint(5d0/mink(3)),3
+ do i = 0,nint(5d0/mink (1)),3
+	do j = 0,nint(5d0/mink (2)),3
+		do k = 0,nint(5d0/mink (3)),3
 			if ( i+j+k .gt. 1) then
 				if ( (mag1 .lt. maxk) .and. (i+j+k .ne. 0 ) ) then
-				mag1 = dsqrt( (i*mink(1))**2 + (j*mink(2))**2 + (k*mink(3))**2 )
-					kvec(:,n) = (/  i*mink(1), j*mink(2), k*mink(3) /)
+				mag1 = dsqrt( (i*mink (1))**2 + (j*mink (2))**2 + (k*mink (3))**2 )
+					kvec(:,n) = (/  i*mink (1), j*mink (2), k*mink (3) /)
 					mags(n) = mag1
 					n = n + 1
 
@@ -359,7 +356,7 @@ endif! (SMALLKSET)
 
  write(*,*) "Total number of k vectors (including diagonals) = ", Nk
 
- allocate(magk(Nk))
+ allocate(magk (Nk))
  allocate(chik0(Nk))
  allocate(chik0_self(Nk))
  allocate(str_fac(Nk))
@@ -478,7 +475,7 @@ subroutine write_out
  write(20,'(a)') '@map color 13 to (103, 7, 72), "maroon"  '
  write(20,'(a)') '@map color 14 to (64, 224, 208), "turquoise" '
  write(20,'(a)') '@ xaxis label "t (ps\S-1\N)" '
- write(20,'(a)') '@ yaxis label "\f{Symbol}f\f{Times-Roman}\sL\N(k,t)" '
+ write(20,'(a)') '@ yaxis label "\f{Symbol}F\f{Times-Roman}\sL\N(k,t)" '
  write(20,'(a)') '@ xaxes scale Normal '
  write(20,'(a)') '@ yaxes scale Normal '
  write(20,'(a)') '@TYPE xy '
@@ -502,11 +499,11 @@ do i = 1, num_ind_mags
 enddo
 
  do t = 1, nsteps_out
-	write(20,'(1ES12.3)',advance='no') real(t-1)*timestep 
+	write(20,'(1ES15.6)',advance='no') real(t-1)*timestep 
  	do n = 1, num_ind_mags-1
- 		write(20,'(1f12.4)',advance='no') phiL_tr(n,t) 
+ 		write(20,'(1f15.6)',advance='no') phiL_tr(n,t) 
 	enddo
-	 	write(20,'(1f12.4)',advance='yes') phiL_tr(num_ind_mags,t) 
+	 	write(20,'(1f15.6)',advance='yes') phiL_tr(num_ind_mags,t) 
  enddo
  close(20)
 
@@ -533,7 +530,7 @@ enddo
  write(20,'(a)') '@map color 13 to (103, 7, 72), "maroon"  '
  write(20,'(a)') '@map color 14 to (64, 224, 208), "turquoise" '
  write(20,'(a)') '@ xaxis label "t (ps\S-1\N)" '
- write(20,'(a)') '@ yaxis label "\f{Symbol}f\f{Times-Roman}\sT\N(k,t)" '
+ write(20,'(a)') '@ yaxis label "\f{Symbol}F\f{Times-Roman}\sT\N(k,t)" '
  write(20,'(a)') '@ xaxes scale Normal '
  write(20,'(a)') '@ yaxes scale Normal '
  write(20,'(a)') '@TYPE xy '
@@ -557,11 +554,11 @@ do i = 1, num_ind_mags
 enddo
 
  do t = 1, nsteps_out
-	write(20,'(1ES12.6)',advance='no') real(t-1)*timestep 
+	write(20,'(1ES15.6)',advance='no') real(t-1)*timestep 
  	do n = 1, num_ind_mags-1
- 		write(20,'(1f12.4)',advance='no') phiT_tr(n,t) 
+ 		write(20,'(1f15.6)',advance='no') phiT_tr(n,t) 
 	enddo
-	 	write(20,'(1f12.4)',advance='yes') phiT_tr(num_ind_mags,t) 
+	 	write(20,'(1f15.6)',advance='yes') phiT_tr(num_ind_mags,t) 
  enddo
  close(20)
 
@@ -569,7 +566,7 @@ enddo
 !-------------------------------------------------------------------------------
  open(21,file=trim(fileheader)//"_chik.dat",status="unknown")
 write(21,'(a)') '# This .xvg is formated for xmgrace '
-write(21,'(a)') '@ xaxis  label "k(\cE\C\S-1\N)" '
+write(21,'(a)') '@ xaxis  label "k (\cE\C\S-1\N)" '
 write(21,'(a)') '@ yaxis  label "\f{Symbol}c\f{Times-Roman}(k,0)" '
 write(21,'(a)') '@ TYPE xy '
 write(21,'(a)') '@ legend on '
@@ -588,9 +585,9 @@ write(21,'(a)') '@ s0 legend \" ", "\"" '
  do t = 1, nsteps_out
 	write(20,'(1ES12.3)',advance='no') real(t-1)*timestep 
  	do n = 1, num_ind_mags-1
- 		write(20,'(1f12.4)',advance='no') phiL_tr(n,t) 
+ 		write(20,'(1f15.6)',advance='no') phiL_tr(n,t) 
 	enddo
-	 	write(20,'(1f12.4)',advance='yes') phiL_tr(num_ind_mags,t) 
+	 	write(20,'(1f15.6)',advance='yes') phiL_tr(num_ind_mags,t) 
  enddo
  close(20)
 
@@ -599,9 +596,9 @@ write(21,'(a)') '@ s0 legend \" ", "\"" '
  do t = 1, nsteps_out
 	write(20,'(1ES12.3)',advance='no') real(t-1)*timestep 
  	do n = 1, num_ind_mags-1
- 		write(20,'(1f12.4)',advance='no') phiT_tr(n,t) 
+ 		write(20,'(1f15.6)',advance='no') phiT_tr(n,t) 
 	enddo
-	 	write(20,'(1f12.4)',advance='yes') phiT_tr(num_ind_mags,t) 
+	 	write(20,'(1f15.6)',advance='yes') phiT_tr(num_ind_mags,t) 
  enddo
  close(20)
 
@@ -615,13 +612,20 @@ write(21,'(a)') '@ s0 legend \" ", "\"" '
  close(21)
 
 
+!-------------------------------------------------------------------------------
+ open(21,file=trim(fileheader)//"_chik_err.dat",status="unknown")
+ do i = 1, num_ind_mags
+        write(21,'(1f10.4,2f16.4)')  magk_tr(i), chik0_tr(i), chik0_err_tr(i)
+ enddo
+ close(21)
+
 
 !-------------------------------------------------------------------------------
  open(17,file=trim(fileheader)//"_epsk.dat",status="unknown")
  write(17,'(a)') '# This .xvg is formated for xmgrace "'
- write(17,'(a)') '@ xaxis  label "k(\cE\C\S-1\N)" '
+ write(17,'(a)') '@ xaxis  label "k (\cE\C\S-1\N)" '
  write(17,'(a)') '@ yaxis  label "\f{Symbol}e\f{Times-Roman}(k,\f{Symbol}w\f{Times-Roman})" '
- write(17,'(a)') '@ TYPE xydy '
+ write(17,'(a)') '@ TYPE xy '
  write(17,'(a)') '@ legend on '
  write(17,'(a)') '@ legend box off '
  write(17,'(a)') '@ legend loctype view '
@@ -629,15 +633,16 @@ write(21,'(a)') '@ s0 legend \" ", "\"" '
  write(17,'(a)') '@ legend length 2'
  write(17,'(a)') '@ s0 legend \" ", "\"" '
  do i = 1, num_ind_mags
- 	write(17,'(1f10.4,2f16.4)')  magk_tr(i), 1d0 - 1d0/chik0_tr(i)
+ 	write(17,'(1f10.4,2f16.4)')  magk_tr(i), 1d0/(1d0 - chik0_tr(i)), chik0_err_tr(i)/(1-chik0_err_tr(i))**2
+
  enddo
  close(17)
 
 !-------------------------------------------------------------------------------
  open(18,file=trim(fileheader)//"_epskT.dat",status="unknown")
  write(18,'(a)') '# This .xvg is formated for xmgrace "'
- write(18,'(a)') '@ xaxis  label "k(\cE\C\S-1\N)" '
- write(18,'(a)') '@ yaxis  label "\f{Symbol}e\f{Times-Roman}(k,\f{Symbol}w\f{Times-Roman})" '
+ write(18,'(a)') '@ xaxis  label "k (\cE\C\S-1\N)" '
+ write(18,'(a)') '@ yaxis  label "\f{Symbol}e\f{Times-Roman}\sT\N(k,0)" '
  write(18,'(a)') '@ TYPE xy '
  write(18,'(a)') '@ legend on '
  write(18,'(a)') '@ legend box off '
@@ -655,7 +660,7 @@ write(21,'(a)') '@ s0 legend \" ", "\"" '
 !-------------------------------------------------------------------------------
  open(18,file=trim(fileheader)//"_str_fac.dat",status="unknown")
  write(18,'(a)') '# This .xvg is formated for xmgrace "'
- write(18,'(a)') '@ xaxis  label "k(\cE\C\S-1\N)" '
+ write(18,'(a)') '@ xaxis  label "k (\cE\C\S-1\N)" '
  write(18,'(a)') '@ yaxis  label "S\smol\N(k,0)" '
  write(18,'(a)') '@ TYPE xy '
  write(18,'(a)') '@ legend on '
@@ -745,11 +750,11 @@ SUBROUTINE Bubble_Sort(magk, a, Nk, max_num_kvecs)
   DO j = SIZE(magk)-1, 1, -1
     swapped = .FALSE.
     DO i = 1, j
-      IF (magk(i) > magk(i+1)) THEN
+      IF (magk (i) > magk (i+1)) THEN
 
-        temp = magk(i)
-        magk(i) = magk(i+1)
-        magk(i+1) = temp
+        temp = magk (i)
+        magk (i) = magk (i+1)
+        magk (i+1) = temp
 
         temp2 = a(:,i)
         a(:,i) = a(:,i+1)

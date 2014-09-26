@@ -122,6 +122,7 @@ enddo
  !prefactors
  chik0_tr      = prefac*chik0_tr/(dble(nsteps))  
  chik0_self_tr = prefac*chik0_self_tr/(dble(nsteps)) 
+ chik0_err_tr  = prefac*chik0_err_tr/(dble(nsteps))
  str_fackt_tr  = str_fackt_tr/(dble(Nmol)*dble(nsteps))  
 
 

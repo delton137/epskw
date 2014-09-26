@@ -35,7 +35,7 @@ subroutine truncate
  allocate(chik0T_tr(num_ind_mags))
  allocate(str_fac_tr(num_ind_mags))
 
- allocate(chik0_err(num_ind_mags))
+ allocate(chik0_err_tr(num_ind_mags))
  allocate(str_fac_err(num_ind_mags))
 
   allocate(str_fackt_tr(num_ind_mags,maxsteps))
@@ -53,9 +53,9 @@ do n = 1, num_ind_mags
 	chik0_tr(n) =  sum(chik0(ix:ix+num_this_mag(n)-1))/real(num_this_mag(n)) 
 
 	if (num_this_mag(n) .gt. 5) then
-		chik0_err(n) = sqrt(sum( ( chik0(ix:ix+num_this_mag(n)-1)- chik0_tr(n) )**2))/real(num_this_mag(n))
+		chik0_err_tr(n) = sqrt(sum( ( chik0(ix:ix+num_this_mag(n)-1)- chik0_tr(n) )**2))/real(num_this_mag(n))
 	else 
-		chik0_err(n) =  0 
+		chik0_err_tr(n) =  0 
 	endif
 
 	chik0_self_tr(n) =  sum(chik0_self(ix:ix+num_this_mag(n)-1))/real(num_this_mag(n))  
