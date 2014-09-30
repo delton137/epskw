@@ -50,9 +50,11 @@ subroutine truncate
 ix = 1
 do n = 1, num_ind_mags
 	magk_tr(n) =   sum( magk(ix:ix+num_this_mag(n)-1))/real(num_this_mag(n)) 
+
 	chik0_tr(n) =  sum(chik0(ix:ix+num_this_mag(n)-1))/real(num_this_mag(n)) 
 
-	if (num_this_mag(n) .gt. 5) then
+	!error in chi(k,0)
+	if (num_this_mag(n) .gt. 3) then
 		chik0_err_tr(n) = sqrt(sum( ( chik0(ix:ix+num_this_mag(n)-1)- chik0_tr(n) )**2))/real(num_this_mag(n))
 	else 
 		chik0_err_tr(n) =  0 
@@ -62,15 +64,17 @@ do n = 1, num_ind_mags
 
  	str_fac_tr(n) = sum(str_fac(ix:ix+num_this_mag(n)-1))/real(num_this_mag(n))
 
-	if (num_this_mag(n) .gt. 5) then
+	if (num_this_mag(n) .gt. 3) then
 		str_fac_err(n) = real( sqrt(sum( ( str_fac(ix:ix+num_this_mag(n)-1) - str_fac_tr(n) )**2) )/real(num_this_mag(n)) )
 	else 
 		str_fac_err(n) =  0 
 	endif
 
-	str_fackt_tr(n,:) =  sum(str_fackt(ix:ix+num_this_mag(n)-1,:),1)/real(num_this_mag(n))  
+	str_fackt_tr(n,:) =  sum(str_fackt(ix:ix+num_this_mag(n)-1,:),1)/real(num_this_mag(n))
+  
 	!rhokt_tr(n,:)     =  sum(rhokt(ix:ix+num_this_mag(n)-1,:),1)/real(num_this_mag(n))  
 	!polTkt_tr(n,:,:)  =  sum(polTkt(ix:ix+num_this_mag(n)-1,:,:),1)/real(num_this_mag(n))  
+
 	phiL_tr(n,:) =  sum(phiL(ix:ix+num_this_mag(n)-1,1:nsteps_out),1)/real(num_this_mag(n))  
 	phiT_tr(n,:) =  sum(phiT(ix:ix+num_this_mag(n)-1,1:nsteps_out),1)/real(num_this_mag(n))  
 
