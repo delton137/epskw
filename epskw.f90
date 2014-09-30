@@ -130,11 +130,11 @@ do n = 1, num_ind_mags
 
 	chik0_self_tr(n) = chik0_self_tr(n)/(magk_tr(n)**2)
 	
-	eps0T_tr(n) = prefac*eps0T_tr(n)/(magk_tr(n)**2)/3d0 + 1d0	
+	eps0T_tr(n) = prefac*eps0T_tr(n)/(magk_tr(n)**2) + 1d0	
 
  	chik0T_tr(n)  = 1d0 - 1d0/eps0T_tr(n)
 
-	str_fac_tr(n) = sum(str_fackt_tr(n,1:nsteps))/3d0 
+	str_fac_tr(n) = sum(str_fackt_tr(n,1:nsteps)) 
 enddo
 
 !call calc_Imagkw

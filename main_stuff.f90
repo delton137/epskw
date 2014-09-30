@@ -22,15 +22,17 @@ real(8),dimension(:,:),allocatable ::  phiL, phiT, phiL_tr, phiT_tr, chikw, chik
 double complex, dimension(:,:), allocatable :: rhokt, rhokt_tr
 double complex, dimension(:,:,:), allocatable :: polTkt, polTkt_tr
 real(8), dimension(:),allocatable :: qHs, qOs
-real(8),dimension(3) :: v1, v2, v3, summ, box, ibox
-real(8) ::  tmpOr, tmpOc, tmpHr, tmpHc, Orp, Ocp, Hrp, Hcp
+real(8), dimension(:,:),allocatable :: Pdip
+real(8), dimension(3) :: v1, v2, v3, summ, box, ibox
+real(8) ::  tmpOr, tmpOc, tmpHr, tmpHc, Orp, Ocp, Hrp, Hcp,  Hrp2, Hcp2, junkmag, muL
+real(8) ::  tmpOr_nocharge, tmpOc_nocharge, tmpHr_nocharge, tmpHc_nocharge, tmpDr, tmpDc, Drp, Dcp
  character(len=3) :: sym
  character(120)   :: fileinp
- character(120) :: TTM3F_dip_input,fileheader,model
+ character(120) :: TTM3F_dip_input,TTM3F_input,fileheader,model
 real(8) :: vol,  maxk, qO, qH, qO2, qH2, temp,  qOqH, delta
 real(8) :: prefac,  r, seconds, rOM, timestep, max_freq 
-integer :: Na, Nmol, i, j, k, ia, ix, nsteps, nsteps_out, w
-integer :: npts, t, n, Nk, ierror,  Nw
+integer :: Na, Nmol, i, j, k, l, ia, ix, nsteps, nsteps_out, w
+integer :: npts, t, n, Nk, ierror,  Nw, num_face_diagonals, max_diag
 logical :: TIP4P, GRIDSAMPLE, TTM3F, SMALLKSET
 real(8), parameter :: pi = 3.14159265d0 
 real(8), parameter :: kb = 1.3806488d-23 ! Jul/Kelvin
@@ -67,8 +69,8 @@ read(5,*) filetype
 read(5,*) fileheader
 read(5,*) box
 read(5,*) maxk
-read(5,*) Nk
-read(5,*) temp
+read(5,*) num_face_diagonals
+read(5,*) max_diag
 read(5,*) model
 read(5,*) qO
 read(5,*) qH
@@ -126,8 +128,15 @@ else if (model == 'tip4p2005f') then
 	rMH = 0.896784
 	TIP4P = .true.
 	write(*,*) "Model is TIP4P/2005f"
+else if ((model == 'ttm3') .or. (model == 'ttm3f')) then
+	write(*,*) "Model is TTM3F"
+	qO = -1	
+	qH = .5
+	rOM = 0.4646
+	TIP4P = .true.
+	TTM3F = .true.
 else 
-	write(*,*) "Model is generic 3 site"
+		write(*,*) "Model is generic 3 site"
 	qO = -1d0	
 	qH = .5d0
 	rOM = .1546
@@ -135,14 +144,6 @@ else
 	rMH = 0.896784
 	TIP4P = .false.
 endif 
-if ((model == 'ttm3') .or. (model == 'ttm3f')) then
-	write(*,*) "Model is TTM3F"
-	qO = -1	
-	qH = .5
-	rOM = 0.4646
-	TIP4P = .true.
-	TTM3F = .true.
-endif
 if ( .not. (qO + 2*qH .eq. 0) ) then
 	write(*,*) "ERROR in charge values!!"
 	stop
@@ -165,6 +166,7 @@ if (filetype .eq. "xyz") then
             write(*,*) "using", Na
 	     Na = NAT
         endif
+	write(*,*) "Checking length of trajectory.. this can take some time)..."
 	Do
 		Read(12,*,iostat=ierror) 
 		if (ierror /= 0) then
@@ -173,7 +175,7 @@ if (filetype .eq. "xyz") then
   		npts = npts + 1 !Count number of lines
 	enddo
 	rewind(12)
-	close(12)
+	write(*,*) "...done"
 
 	nsteps = floor(real(npts) / real((Na + 2)))! Number of timesteps
 	write(*,*) "there are ", nsteps, " steps in the file"
@@ -220,6 +222,7 @@ allocate(Oxy(3,Nmol))
 allocate(Hydro(3,Nmol*2))
 if (TTM3F) allocate(qOs(Nmol))
 if (TTM3F) allocate(qHs(2*Nmol))
+if (TTM3F) allocate(Pdip(3,NmoL))
 
 
 if (TTM3F) then 
@@ -227,7 +230,10 @@ if (TTM3F) then
 	if (ierror /= 0) then
 		write(*,*) "ERROR opening TTM3F charge file"
 	endif
-	!open(51,file=fileinp(1:LEN_TRIM(fileinp)-9)//"dip.dat",status="old",action="read",iostat=ierror)
+	open(51,file=fileinp(1:LEN_TRIM(fileinp)-9)//"dip.dat",status="old",action="read",iostat=ierror)
+	if (ierror /= 0) then
+		write(*,*) "ERROR opening TTM3F dipoles file"
+	endif
 endif
 
 
@@ -329,27 +335,47 @@ else
  enddo
  write(*,*) "Using ", n-1, "k vectors parallel to the box edges"
 
-!!construct diagonal k vectors
-! do i = 0,nint(5d0/mink (1)),3
-!	do j = 0,nint(5d0/mink (2)),3
-!		do k = 0,nint(5d0/mink (3)),3
-!			if ( i+j+k .gt. 1) then
-!				if ( (mag1 .lt. maxk) .and. (i+j+k .ne. 0 ) ) then
-!				mag1 = dsqrt( (i*mink (1))**2 + (j*mink (2))**2 + (k*mink (3))**2 )
-!					kvec(:,n) = (/  i*mink (1), j*mink (2), k*mink (3) /)
-!					mags(n) = mag1
-!					n = n + 1
-!
-!					if (n .gt. max_num_kvecs-1) then
-!						write(*,*) "limit of 10,000 k vecs reached"
-!						write(*,*) "code will be too slow/run out of memory if more are used"
-!						stop
-!					endif
-!				endif
-!			endif
-!		enddo
-!	enddo
-! enddo
+
+if (max_diag .gt. 0) then
+ do i = 0,nint(max_diag/mink (1)),2
+	do j = 0,nint(max_diag/mink (2)),2
+		do k = 0,nint(max_diag/mink (3)),2
+			if ( i+j+k .gt. 1) then
+				if ( (mag1 .lt. maxk) .and. (i+j+k .ne. 0 ) ) then
+				mag1 = dsqrt( (i*mink (1))**2 + (j*mink (2))**2 + (k*mink (3))**2 )
+					kvec(:,n) = (/  i*mink (1), j*mink (2), k*mink (3) /)
+					mags(n) = mag1
+					n = n + 1
+
+					if (n .gt. max_num_kvecs-1) then
+						write(*,*) "limit of 10,000 k vecs reached"
+						write(*,*) "code will be too slow/run out of memory if more are used"
+						stop
+					endif
+				endif
+			endif
+		enddo
+	enddo
+ enddo
+else
+!!Construct only k vectors that lie along the faces that are of the form (l,l,0), (l,0,l) or (0,l,l) , where l is an integer
+ do l = 1, num_face_diagonals
+    do i = 0,l,l
+       do j = 0,l,l
+          do k = 0,l,l
+              if  (i+j+k .gt. l ) then
+                    mag1 = dsqrt( (i*mink(1))**2 +(j*mink(2))**2 + (k*mink(3))**2 )
+                    kvec(:,n) = (/  i*mink(1), j*mink(2),k*mink(3) /)
+                    mags(n) = mag1
+                    Nk = Nk + 1
+                    n = n + 1
+              endif
+          enddo
+       enddo
+    enddo
+ enddo
+endif
+
  Nk = n - 1
 
 endif! (SMALLKSET)
@@ -444,6 +470,7 @@ subroutine read_trajectory_frame
 		read(50,*) qOs(i)
 		read(50,*) qHs(2*i-0)
 		read(50,*) qHs(2*i-1)
+		read(51,*) Pdip(1:3,i), junkmag
 	enddo
  endif
 

@@ -53,6 +53,73 @@ enddo
 end subroutine calc_chik
 
 
+!--------------------------------------------------------------------------
+!----------------  Longitudinal chi(k) & structure factor calculation - TTM3F
+!--------------------------------------------------------------------------
+subroutine calc_chik_TTM3F
+ use main_stuff
+ Implicit none 
+
+do n = 1, Nk 
+		tmpOr = 0 
+		tmpOc = 0
+		tmpHr = 0
+		tmpHc = 0 
+		tmpDr = 0 
+		tmpDc = 0 
+		tmpHr_nocharge = 0 
+		tmpHr_nocharge = 0 
+		!longitudinal part 
+		do i = 1, Nmol
+			!Oxygens 
+			Orp = dcos( dot_product(kvec(:,n),Oxy(:,i)) )
+			Ocp = dsin( dot_product(kvec(:,n),Oxy(:,i)) ) 
+
+			tmpOr = tmpOr + qOs(i)*Orp 
+			tmpOc = tmpOc + qOs(i)*Ocp
+
+			tmpOr_nocharge  = tmpOr + Orp 
+			tmpOc_nocharge  = tmpOc + Ocp
+ 
+			!Hydrogens
+			!first hydro
+			Hrp = dcos( dot_product(kvec(:,n),Hydro(:,2*i-0)) )   
+			Hcp = dsin( dot_product(kvec(:,n),Hydro(:,2*i-0)) )  
+
+			!second hydro
+			Hrp2 = dcos( dot_product(kvec(:,n),Hydro(:,2*i-1)) )
+			Hcp2 = dsin( dot_product(kvec(:,n),Hydro(:,2*i-1)) )	
+
+			tmpHr = tmpHr + qHs(2*i-0)*Hrp + qHs(2*i-1)*Hrp2
+			tmpHc = tmpHc + qHs(2*i-0)*Hcp + qHs(2*i-1)*Hcp2
+
+			tmpHr_nocharge  = tmpHr_nocharge  + Hrp + Hrp2
+			tmpHc_nocharge  = tmpHc_nocharge  + Hcp + Hcp2
+
+			!contribution of the point dipole (cf Bertolini Tani Mol Phys 75 1065)
+			muL = dot_product(kvec(:,n),Pdip(:,i))*0.20819434d0  !convert Debye to eAng
+
+			Drp = muL*dsin( dot_product(kvec(:,n),Msites(:,i)) )
+			Dcp = muL*dsin( dot_product(kvec(:,n),Msites(:,i)) )
+			
+			tmpDr = tmpDr + Drp 
+			tmpDc = tmpDc + Dcp
+
+			!self part contribution for this moleucle
+			chik0_self(n) = chik0_self(n) +  (qOs(i)*Orp  + qHs(2*i-0)*Hrp + qHs(2*i-1)*Hrp2 + Drp )**2 + (qOs(i)*Ocp + qHs(2*i-0)*Hcp + qHs(2*i-1)*Hcp2 + Dcp)**2 
+		enddo
+
+		rhokt(n,t) = rhokt(n,t) + dcmplx(tmpOr + tmpHr + tmpDr, tmpOc + tmpHc + tmpDc)
+
+		chik0(n)   = chik0(n)   + (tmpOr + tmpHr + tmpDr)**2 +  (tmpOc + tmpHc + tmpDc)**2
+
+		str_fackt(n,t) = str_fackt(n,t) +  (tmpOr_nocharge + tmpHr_nocharge )**2  +  (tmpOc_nocharge + tmpHc_nocharge)**2
+enddo
+
+
+end subroutine calc_chik_TTM3F
+
+
 
 !--------------------------------------------------------------------------
 !----------------  Transverse chi(k) calculation ---------------------------
@@ -108,19 +175,6 @@ enddo! n = 1, Nk
 
 end subroutine calc_chik_transverse
  
-
-
-
-
-!--------------------------------------------------------------------------
-!----------------  TTM3F chi(k) calculation (variable charges) -----------
-!--------------------------------------------------------------------------
-subroutine calc_chik_TTM3F
-
-
-end subroutine calc_chik_TTM3F
-
-
 
 !----------------------------------------------------------------------------------
 !------------------- function to compute COMPLEX cross product ---------------------------

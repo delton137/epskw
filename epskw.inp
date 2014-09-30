@@ -1,0 +1,17 @@
+"test.xtc"               !input file name   
+'xtc'			 !filetype "xtc" or "xyz"
+'SPCE1000' 	      	 !label for output file(s) 
+31.0429 31.0429 31.0429 		 !length (size of box in Angstroms)
+10 			 !max k to use (in inverse Angstroms)
+200			 !Number of k-points (range of k is from (2pi)/(2*length) to max_k)
+298			 !Temp (K) 
+tip4p2005		 !model (tip4p, tip4p2005,tip4p2005f,spce,tip3p,ttm3(req. extra file), generic)
+-1       		 !for generic model: charge on the oxygen (include +/-)	
+.5 			 !for generic model: charge on the hydrogen 
+1700000			 !MAX number of steps to use
+2048			 !Number of atoms (this will be checked)
+.true.			 !Perform normal calculation? (if false a blank file will be returned)
+.false.			 !Perform alternative calculation?
+
+
+
