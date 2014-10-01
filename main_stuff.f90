@@ -30,10 +30,11 @@ real(8) ::  tmpOr_nocharge, tmpOc_nocharge, tmpHr_nocharge, tmpHc_nocharge, tmpD
  character(120)   :: fileinp
  character(120) :: TTM3F_dip_input,TTM3F_input,fileheader,model
 real(8) :: vol,  maxk, qO, qH, qO2, qH2, temp,  qOqH, delta
-real(8) :: prefac,  r, seconds, rOM, timestep, max_freq 
+real(8) :: prefac,  r, seconds, rOM, timestep, max_freq,  max_diag
 integer :: Na, Nmol, i, j, k, l, ia, ix, nsteps, nsteps_out, w
-integer :: npts, t, n, Nk, ierror,  Nw, num_face_diagonals, max_diag
+integer :: npts, t, n, Nk, ierror,  Nw, num_face_diagonals
 logical :: TIP4P, GRIDSAMPLE, TTM3F, SMALLKSET
+logical :: CHECK_TRAJECTORY_LENGTH
 real(8), parameter :: pi = 3.14159265d0 
 real(8), parameter :: kb = 1.3806488d-23 ! Jul/Kelvin
 real(8), parameter :: eps_0 = 8.85418781d-12 ! F/m = C^2/Jul/m
@@ -68,6 +69,8 @@ read(5,*) fileinp
 read(5,*) filetype 
 read(5,*) fileheader
 read(5,*) box
+read(5,*) temp
+read(5,*) CHECK_TRAJECTORY_LENGTH
 read(5,*) maxk
 read(5,*) num_face_diagonals
 read(5,*) max_diag
@@ -166,23 +169,25 @@ if (filetype .eq. "xyz") then
             write(*,*) "using", Na
 	     Na = NAT
         endif
-	write(*,*) "Checking length of trajectory.. this can take some time)..."
-	Do
-		Read(12,*,iostat=ierror) 
-		if (ierror /= 0) then
-   	    		exit
-   		End if
-  		npts = npts + 1 !Count number of lines
-	enddo
-	rewind(12)
-	write(*,*) "...done"
+	if (CHECK_TRAJECTORY_LENGTH) then
+		write(*,*) "Checking length of trajectory.. this can take some time)..."
+		Do
+			Read(12,*,iostat=ierror) 
+			if (ierror /= 0) then
+   		    		exit
+   			End if
+  			npts = npts + 1 !Count number of lines
+		enddo
+		rewind(12)
+		write(*,*) "...done"
+		nsteps = floor(real(npts) / real((Na + 2)))! Number of timesteps
 
-	nsteps = floor(real(npts) / real((Na + 2)))! Number of timesteps
-	write(*,*) "there are ", nsteps, " steps in the file"
-	if (maxsteps .gt. nsteps) then
-		maxsteps = nsteps
-	endif 
-		
+		write(*,*) "there are ", nsteps, " steps in the file"
+		if (maxsteps .gt. nsteps) then
+			maxsteps = nsteps
+		endif 
+	endif
+	
 	Nmol = Na/3
 	write(*,*) "Number of molecules: ", Nmol
 endif
@@ -337,14 +342,16 @@ else
 
 
 if (max_diag .gt. 0) then
- do i = 0,nint(max_diag/mink (1)),2
-	do j = 0,nint(max_diag/mink (2)),2
-		do k = 0,nint(max_diag/mink (3)),2
+ write(*,*) "Building diagonals.."
+ do i = 0,nint(5d0/mink (1))
+	do j = 0,nint(5d0/mink (2))
+		do k = 0,nint(5d0/mink (3))
 			if ( i+j+k .gt. 1) then
 				if ( (mag1 .lt. maxk) .and. (i+j+k .ne. 0 ) ) then
 				mag1 = dsqrt( (i*mink (1))**2 + (j*mink (2))**2 + (k*mink (3))**2 )
 					kvec(:,n) = (/  i*mink (1), j*mink (2), k*mink (3) /)
 					mags(n) = mag1
+                          	!!     write(*,*) "adding diag ", mags(n)
 					n = n + 1
 
 					if (n .gt. max_num_kvecs-1) then
@@ -359,16 +366,27 @@ if (max_diag .gt. 0) then
  enddo
 else
 !!Construct only k vectors that lie along the faces that are of the form (l,l,0), (l,0,l) or (0,l,l) , where l is an integer
- do l = 1, num_face_diagonals
+ write(*,*) "Building face diagonals.."
+ do l = 1, floor(real(num_face_diagonals/3))
     do i = 0,l,l
        do j = 0,l,l
           do k = 0,l,l
               if  (i+j+k .gt. l ) then
+		if ((i .eq. 0) .or. (j .eq. 0) .or. (k .eq. 0)) then 
                     mag1 = dsqrt( (i*mink(1))**2 +(j*mink(2))**2 + (k*mink(3))**2 )
-                    kvec(:,n) = (/  i*mink(1), j*mink(2),k*mink(3) /)
-                    mags(n) = mag1
-                    Nk = Nk + 1
-                    n = n + 1
+		    if  (mag1 .lt. maxk) then 
+                 	    kvec(:,n) = (/  i*mink(1), j*mink(2),k*mink(3) /)
+                	    mags(n) = mag1
+                             !  write(*,*) "adding face diag ", kvec(:,n)
+                	    n = n + 1
+
+		 	    if (n .gt. max_num_kvecs-1) then
+				write(*,*) "limit of 10,000 k vecs reached"
+				write(*,*) "code will be too slow/run out of memory if more are used"
+				stop
+			    endif
+	 	    endif
+	         endif
               endif
           enddo
        enddo
