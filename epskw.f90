@@ -118,6 +118,10 @@ enddo
  vol = box(1)*box(2)*box(3)
  prefac = (e2C**2)/(eps_0*kb*temp*vol*a2m) 
 
+if (DYNAMIC_STR_FAC) then
+ prefac = 1/(dble(Nmol)*3d0) 
+endif
+
  !prefactors
  chik0_tr      = prefac*chik0_tr/(dble(nsteps))  
  chik0_self_tr = prefac*chik0_self_tr/(dble(nsteps)) 

@@ -34,7 +34,7 @@ real(8) :: prefac,  r, seconds, rOM, timestep, max_freq,  max_diag
 integer :: Na, Nmol, i, j, k, l, ia, ix, nsteps, nsteps_out, w
 integer :: npts, t, n, Nk, ierror,  Nw, num_face_diagonals
 logical :: TIP4P, GRIDSAMPLE, TTM3F, SMALLKSET
-logical :: CHECK_TRAJECTORY_LENGTH
+logical :: CHECK_TRAJECTORY_LENGTH, DYNAMIC_STR_FAC
 real(8), parameter :: pi = 3.14159265d0 
 real(8), parameter :: kb = 1.3806488d-23 ! Jul/Kelvin
 real(8), parameter :: eps_0 = 8.85418781d-12 ! F/m = C^2/Jul/m
@@ -82,6 +82,7 @@ read(5,*) Na
 read(5,*) timestep
 read(5,*) SMALLKSET
 read(5,*) nsteps_out
+read(5,*) DYNAMIC_STR_FAC
 !close(5)
 end subroutine read_input_file
 
@@ -150,6 +151,12 @@ endif
 if ( .not. (qO + 2*qH .eq. 0) ) then
 	write(*,*) "ERROR in charge values!!"
 	stop
+endif
+
+!interchage charges with mass
+if (DYNAMIC_STR_FAC) then
+	qO = 15.9994d0
+	qH = 1.008d0
 endif
 
 end subroutine set_up_model
@@ -501,7 +508,11 @@ subroutine write_out
 
 
 !-------------------------------------------------------------------------------
+if (DYNAMIC_STR_FAC) then
+ open(20,file=trim(fileheader)//"_F_L.dat",status="unknown")
+else
  open(20,file=trim(fileheader)//"_phikL.dat",status="unknown")
+endif
 
  write(20,'(a)') '# This .xvg is formated for xmgrace "'
  write(20,'(a)') '@map color 0 to (255, 255, 255), "white"  '
@@ -556,7 +567,11 @@ enddo
 
 
 !-------------------------------------------------------------------------------
+if (DYNAMIC_STR_FAC) then
+ open(20,file=trim(fileheader)//"_F_T.dat",status="unknown")
+else
  open(20,file=trim(fileheader)//"_phikT.dat",status="unknown")
+endif
 
  write(20,'(a)') '# This .xvg is formated for xmgrace "'
  write(20,'(a)') '@map color 0 to (255, 255, 255), "white"  '
@@ -609,7 +624,12 @@ enddo
 
 
 !-------------------------------------------------------------------------------
+if (DYNAMIC_STR_FAC) then
+ open(21,file=trim(fileheader)//"_atom_str_fac.dat",status="unknown")
+else
  open(21,file=trim(fileheader)//"_chik.dat",status="unknown")
+endif 
+
 write(21,'(a)') '# This .xvg is formated for xmgrace '
 write(21,'(a)') '@ xaxis  label "k (\cE\C\S-1\N)" '
 write(21,'(a)') '@ yaxis  label "\f{Symbol}c\f{Times-Roman}(k,0)" '
@@ -626,7 +646,12 @@ write(21,'(a)') '@ s0 legend \" ", "\"" '
  close(21)
 
 !-------------------------------------------------------------------------------
+if (DYNAMIC_STR_FAC) then
+ open(20,file=trim(fileheader)//"_F_L_raw.dat",status="unknown")
+else
  open(20,file=trim(fileheader)//"_phikL_raw.dat",status="unknown")
+endif
+
  do t = 1, nsteps_out
 	write(20,'(1ES12.3)',advance='no') real(t-1)*timestep 
  	do n = 1, num_ind_mags-1
@@ -637,7 +662,12 @@ write(21,'(a)') '@ s0 legend \" ", "\"" '
  close(20)
 
 !-------------------------------------------------------------------------------
+if (DYNAMIC_STR_FAC) then
+ open(20,file=trim(fileheader)//"_F_T_raw.dat",status="unknown")
+else
  open(20,file=trim(fileheader)//"_phikT_raw.dat",status="unknown")
+endif 
+
  do t = 1, nsteps_out
 	write(20,'(1ES12.3)',advance='no') real(t-1)*timestep 
  	do n = 1, num_ind_mags-1
@@ -650,7 +680,12 @@ write(21,'(a)') '@ s0 legend \" ", "\"" '
 
 
 !-------------------------------------------------------------------------------
+if (DYNAMIC_STR_FAC) then
+ open(21,file=trim(fileheader)//"_atom_str_fac_raw.dat",status="unknown")
+else
  open(21,file=trim(fileheader)//"_chik_raw.dat",status="unknown")
+endif
+
  do i = 1, num_ind_mags
  	write(21,'(1f10.4,1f16.4)')  magk_tr(i), chik0_tr(i)
  enddo
@@ -658,7 +693,12 @@ write(21,'(a)') '@ s0 legend \" ", "\"" '
 
 
 !-------------------------------------------------------------------------------
+if (DYNAMIC_STR_FAC) then
+ open(21,file=trim(fileheader)//"_atom_str_fac_err.dat",status="unknown")
+else
  open(21,file=trim(fileheader)//"_chik_err.dat",status="unknown")
+endif
+
  do i = 1, num_ind_mags
         write(21,'(1f10.4,2f16.4)')  magk_tr(i), chik0_tr(i), chik0_err_tr(i)
  enddo
@@ -666,6 +706,7 @@ write(21,'(a)') '@ s0 legend \" ", "\"" '
 
 
 !-------------------------------------------------------------------------------
+if (.not. DYNAMIC_STR_FAC) then
  open(17,file=trim(fileheader)//"_epsk.dat",status="unknown")
  write(17,'(a)') '# This .xvg is formated for xmgrace "'
  write(17,'(a)') '@ xaxis  label "k (\cE\C\S-1\N)" '
@@ -682,8 +723,10 @@ write(21,'(a)') '@ s0 legend \" ", "\"" '
 
  enddo
  close(17)
+endif
 
 !-------------------------------------------------------------------------------
+if (.not. DYNAMIC_STR_FAC) then
  open(18,file=trim(fileheader)//"_epskT.dat",status="unknown")
  write(18,'(a)') '# This .xvg is formated for xmgrace "'
  write(18,'(a)') '@ xaxis  label "k (\cE\C\S-1\N)" '
@@ -699,11 +742,16 @@ write(21,'(a)') '@ s0 legend \" ", "\"" '
  	write(18,'(1f10.4,2f16.4)')  magk_tr(i), eps0T_tr(i), chik0T_tr(i)
  enddo
  close(18)
+endif
 
 
 
 !-------------------------------------------------------------------------------
+if (DYNAMIC_STR_FAC) then
+ open(21,file=trim(fileheader)//"_mol_str_fac.dat",status="unknown")
+else
  open(18,file=trim(fileheader)//"_str_fac.dat",status="unknown")
+endif
  write(18,'(a)') '# This .xvg is formated for xmgrace "'
  write(18,'(a)') '@ xaxis  label "k (\cE\C\S-1\N)" '
  write(18,'(a)') '@ yaxis  label "S\smol\N(k,0)" '

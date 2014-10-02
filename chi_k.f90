@@ -174,10 +174,14 @@ enddo! n = 1, Nk
 
 
 end subroutine calc_chik_transverse
- 
+
+
+
+
+
 
 !----------------------------------------------------------------------------------
-!------------------- function to compute COMPLEX cross product ---------------------------
+!------------------- function to compute COMPLEX cross product ------------------- 
 !----------------------------------------------------------------------------------
 function cross_product(x,z)
  Implicit None
