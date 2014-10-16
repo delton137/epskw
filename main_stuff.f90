@@ -32,7 +32,7 @@ real(8) ::  tmpOr_nocharge, tmpOc_nocharge, tmpHr_nocharge, tmpHc_nocharge, tmpD
 real(8) :: vol,  maxk, qO, qH, qO2, qH2, temp,  qOqH, delta
 real(8) :: prefac,  r, seconds, rOM, timestep, max_freq,  max_diag
 integer :: Na, Nmol, i, j, k, l, ia, ix, nsteps, nsteps_out, w
-integer :: npts, t, n, Nk, ierror,  Nw, num_face_diagonals
+integer :: npts, t, n, Nk, ierror,  Nw, num_face_diagonals, num_body_diagonals
 logical :: TIP4P, GRIDSAMPLE, TTM3F, SMALLKSET
 logical :: CHECK_TRAJECTORY_LENGTH, DYNAMIC_STR_FAC
 real(8), parameter :: pi = 3.14159265d0 
@@ -73,6 +73,7 @@ read(5,*) temp
 read(5,*) CHECK_TRAJECTORY_LENGTH
 read(5,*) maxk
 read(5,*) num_face_diagonals
+read(5,*) num_body_diagonals
 read(5,*) max_diag
 read(5,*) model
 read(5,*) qO
@@ -153,10 +154,9 @@ if ( .not. (qO + 2*qH .eq. 0) ) then
 	stop
 endif
 
-!interchage charges with mass
 if (DYNAMIC_STR_FAC) then
-	qO = 15.9994d0
-	qH = 1.008d0
+	qO = 1d0         !15.9994d0
+	qH = 1d0         !1.008d0
 endif
 
 end subroutine set_up_model
@@ -242,7 +242,7 @@ if (TTM3F) then
 	if (ierror /= 0) then
 		write(*,*) "ERROR opening TTM3F charge file"
 	endif
-	open(51,file=fileinp(1:LEN_TRIM(fileinp)-9)//"dip.dat",status="old",action="read",iostat=ierror)
+	open(51,file=fileinp(1:LEN_TRIM(fileinp)-9)//"Edip.dat",status="old",action="read",iostat=ierror)
 	if (ierror /= 0) then
 		write(*,*) "ERROR opening TTM3F dipoles file"
 	endif
@@ -399,6 +399,27 @@ else
        enddo
     enddo
  enddo
+
+
+ do l = 1, floor(real(num_body_diagonals))
+                   mag1 = dsqrt( (l*mink(1))**2 +(l*mink(2))**2 + (l*mink(3))**2 )
+		    if  (mag1 .lt. maxk) then 
+                 	    kvec(:,n) = (/  l*mink(1), l*mink(2),l*mink(3) /)
+                	    mags(n) = mag1
+                             !  write(*,*) "adding face diag ", kvec(:,n)
+                	    n = n + 1
+		 	    if (n .gt. max_num_kvecs-1) then
+				write(*,*) "limit of 10,000 k vecs reached"
+				write(*,*) "code will be too slow/run out of memory if more are used"
+				stop
+			    endif
+	 	    endif
+ enddo
+
+
+
+
+
 endif
 
  Nk = n - 1
