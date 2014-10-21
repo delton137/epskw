@@ -99,13 +99,13 @@ do n = 1, Nk
 			!contribution of the point dipole (cf Bertolini Tani Mol Phys 75 1065)
 			muL = dot_product(kvec(:,n),Pdip(:,i))*0.20819434d0  !convert Debye to eAng
 
-			Drp = muL*dsin( dot_product(kvec(:,n),Msites(:,i)) )
+			Drp = muL*dcos( dot_product(kvec(:,n),Msites(:,i)) )
 			Dcp = muL*dsin( dot_product(kvec(:,n),Msites(:,i)) )
 			
 			tmpDr = tmpDr + Drp 
 			tmpDc = tmpDc + Dcp
 
-			!self part contribution for this moleucle
+			!self part contribution for this molecule
 			chik0_self(n) = chik0_self(n) +  (qOs(i)*Orp  + qHs(2*i-0)*Hrp + qHs(2*i-1)*Hrp2 + Drp )**2 + (qOs(i)*Ocp + qHs(2*i-0)*Hcp + qHs(2*i-1)*Hcp2 + Dcp)**2 
 		enddo
 
