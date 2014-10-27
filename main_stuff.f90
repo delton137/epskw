@@ -748,7 +748,7 @@ endif
 
 !-------------------------------------------------------------------------------
 if (.not. DYNAMIC_STR_FAC) then
- open(18,file=trim(fileheader)//"_epskT.dat",status="unknown")
+ open(18,file=trim(fileheader)//"_chikT.dat",status="unknown")
  write(18,'(a)') '# This .xvg is formated for xmgrace "'
  write(18,'(a)') '@ xaxis  label "k (\cE\C\S-1\N)" '
  write(18,'(a)') '@ yaxis  label "\f{Symbol}e\f{Times-Roman}\sT\N(k,0)" '
@@ -760,7 +760,7 @@ if (.not. DYNAMIC_STR_FAC) then
  write(18,'(a)') '@ legend length 2'
  write(18,'(a)') '@ s0 legend \" ", "\"" '
  do i = 1, num_ind_mags
- 	write(18,'(1f10.4,2f16.4)')  magk_tr(i), eps0T_tr(i), chik0T_tr(i)
+ 	write(18,'(1f10.4,2f16.4)')  magk_tr(i), chik0T_tr(i),  eps0T_tr(i)
  enddo
  close(18)
 endif
