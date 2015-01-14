@@ -23,7 +23,7 @@ double complex, dimension(:,:), allocatable :: rhokt, rhokt_tr
 double complex, dimension(:,:,:), allocatable :: polTkt, polTkt_tr
 real(8), dimension(:),allocatable :: qHs, qOs
 real(8), dimension(:,:),allocatable :: Pdip
-real(8), dimension(3) :: v1, v2, v3, summ, box, ibox
+real(8), dimension(3) :: v1, v2, v3, summ, box, ibox, muT
 real(8) ::  tmpOr, tmpOc, tmpHr, tmpHc, Orp, Ocp, Hrp, Hcp,  Hrp2, Hcp2, junkmag, muL
 real(8) ::  tmpOr_nocharge, tmpOc_nocharge, tmpHr_nocharge, tmpHc_nocharge, tmpDr, tmpDc, Drp, Dcp
  character(len=3) :: sym

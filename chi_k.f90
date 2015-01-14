@@ -52,6 +52,69 @@ enddo
 
 end subroutine calc_chik
 
+!--------------------------------------------------------------------------
+!----------------  Transverse chi(k) calculation ---------------------------
+!--------------------------------------------------------------------------
+subroutine calc_chik_transverse
+ use main_stuff
+ Implicit none 
+ real(8), dimension(3) :: rCM, raj
+ real(8) :: magraj, q, kdotr
+ double complex, dimension(3) :: mPol !polarization vector for molecule
+ double complex, dimension(3) :: Pol !total polarization vector at that k
+
+
+do n = 1, Nk 
+	Pol = 0
+	do i = 1, Nmol
+		rCM = (16d0*Oxy(:,i) +  Hydro(:,2*i)  + Hydro(:,2*i-1))/18d0
+		mPol = 0
+		do j = 1,3
+			if (j .eq. 1) raj = Oxy(:,i) - rCM
+			if (j .eq. 2) raj = Hydro(:,2*i-0) - rCM
+			if (j .eq. 3) raj = Hydro(:,2*i-1) - rCM
+			!charge
+			if (TTM3F) then 
+				if (j .eq. 1) q = qOs(i)
+				if (j .eq. 2) q = qHs(2*i-0)
+				if (j .eq. 3) q = qHs(2*i-1)
+			else
+				if (j .eq. 1) q = qO
+				if (j .eq. 2) q = qH
+				if (j .eq. 3) q = qH
+			endif
+
+			kdotr = dot_product(kvec(:,n),raj)
+			if (kdotr /= 0.0) then
+				mPol = mPol - dcmplx(0, 1)*( q*raj/kdotr )*( exp( dcmplx(0, 1)*kdotr ) - 1d0 ) 
+			endif
+
+		enddo !j = 1,3
+
+		if (mPol(1) /= mPol(1) ) then
+			write(*,*) "ERROR in transverse polarization!! NaN Debug Info:"
+			write(*,*) "molecule ", i
+			write(*,*) "atom ", j
+			write(*,*) "n ", n
+			write(*,*) "Pol = ", Pol
+			write(*,*) "mPol = ", mPol
+		endif
+
+		kdotr = dot_product(kvec(:,n),rCM)
+
+		if (TTM3F)  mPol = mPol + Pdip(:,i)*0.20819434d0!convert Debye to eAng
+
+		Pol = Pol + mPol*exp( dcmplx(0, -1)*kdotr )
+
+	enddo! i = 1, Nmol
+ 		
+	PolTkt(n,t,:) = cross_product(kvec(:,n) , Pol)!/magk(n) include normalization factor at end (for speed)
+
+enddo! n = 1, Nk 
+
+
+end subroutine calc_chik_transverse
+
 
 !--------------------------------------------------------------------------
 !----------------  Longitudinal chi(k) & structure factor calculation - TTM3F
@@ -121,64 +184,23 @@ end subroutine calc_chik_TTM3F
 
 
 
-!--------------------------------------------------------------------------
-!----------------  Transverse chi(k) calculation ---------------------------
-!--------------------------------------------------------------------------
-subroutine calc_chik_transverse
- use main_stuff
- Implicit none 
- real(8), dimension(3) :: rCM, raj
- real(8) :: magraj, q, kdotr
- double complex, dimension(3) :: mPol !polarization vector for molecule
- double complex, dimension(3) :: Pol !total polarization vector at that k
-
-
-do n = 1, Nk 
-	Pol = 0
-	do i = 1, Nmol
-		rCM = (16d0*Oxy(:,i) +  Hydro(:,2*i)  + Hydro(:,2*i-1))/18d0
-		mPol = 0
-		do j = 1,3
-			if (j .eq. 1) raj = Oxy(:,i) - rCM
-			if (j .eq. 2) raj = Hydro(:,2*i-0) - rCM
-			if (j .eq. 3) raj = Hydro(:,2*i-1) - rCM
-			if (j .eq. 1) q = qO
-			if (j .eq. 2) q = qH
-			if (j .eq. 3) q = qH
-
-			kdotr = dot_product(kvec(:,n),raj)
-			if (kdotr /= 0.0) then
-				mPol = mPol - dcmplx(0, 1)*( q*raj/kdotr )*( exp( dcmplx(0, 1)*kdotr ) - 1d0 ) 
-			endif
-
-		enddo !j = 1,3
-
-		if (mPol(1) /= mPol(1) ) then
-			write(*,*) "ERROR in transverse polarization!! NaN Debug Info:"
-			write(*,*) "molecule ", i
-			write(*,*) "atom ", j
-			write(*,*) "n ", n
-			write(*,*) "Pol = ", Pol
-			write(*,*) "mPol = ", mPol
-		endif
-
-		kdotr = dot_product(kvec(:,n),rCM)
-
-		Pol = Pol + mPol*exp( dcmplx(0, -1)*kdotr )
-
-	enddo! i = 1, Nmol
- 		
-	PolTkt(n,t,:) = cross_product(kvec(:,n) , Pol)
-
-enddo! n = 1, Nk 
-
-
-end subroutine calc_chik_transverse
 
 
 
+!----------------------------------------------------------------------------------
+!------------------- function to compute real cross product ------------------- 
+!----------------------------------------------------------------------------------
+function cross_productR(x,z)
+ Implicit None
+ real(8), dimension(3), intent(in) :: x
+ double precision, dimension(3), intent(in) :: z 
+ double precision, dimension(3) :: cross_productR
 
+  cross_productR(1) = x(2)*z(3) - z(2)*x(3) 
+  cross_productR(2) = z(1)*x(3) - x(1)*z(3)
+  cross_productR(3) = x(1)*z(2) - z(1)*x(2)
 
+end function cross_productR
 
 !----------------------------------------------------------------------------------
 !------------------- function to compute COMPLEX cross product ------------------- 

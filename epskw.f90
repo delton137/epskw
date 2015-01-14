@@ -51,11 +51,11 @@ Do t = 1, maxsteps
 
 	if (TTM3F) then 
 		call calc_chik_TTM3F
+		call calc_chik_transverse 
 	else	
 	 	call calc_chik 
+		call calc_chik_transverse
 	endif 
-
-	call calc_chik_transverse
 
 	if (mod(t,10) .eq. 0) write(*,*) t  
 
@@ -98,12 +98,20 @@ enddo
 !--------------------------------------------------------------------------------- 
 !----------------  truncate results to k with different magnitudes -------------- 
 !--------------------------------------------------------------------------------- 
+
+do n = 1, Nk
+ 	chik0(n) = chik0(n)/(magk(n)**2)
+
+	chik0_self(n) = chik0_self(n)/(magk(n)**2)
+enddo
+
+
  call truncate
 
  Nk = num_ind_mags !Nk changes here!!
 
  !save static transverse part 
- eps0T_tr  = phiT_tr(:,1) 
+ chik0T_tr  = phiT_tr(:,1) 
 
 do n = 1, num_ind_mags
 	!2nd normalization of correlation fun
@@ -134,7 +142,7 @@ do n = 1, num_ind_mags
 
 	chik0_self_tr(n) = chik0_self_tr(n)/(magk_tr(n)**2)
 	
- 	chik0T_tr(n)  = prefac*eps0T_tr(n)/(magk_tr(n)**2)  
+ 	chik0T_tr(n)  = prefac*chik0T_tr(n)/(magk_tr(n)**2)  
 
 	eps0T_tr(n) = chik0T_tr(n)  + 1
 
