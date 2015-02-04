@@ -465,7 +465,7 @@ subroutine read_trajectory_frame
 	!move coords from the X(:) array to the Oxy & Hydro arrays
 	indx = 1
 	!four site model case - the m sites are in the .xtc, these are considered the "oxy"
-	if (TIP4P .eq. .true.) then
+	if (TIP4P .eqv. .true.) then
 		do ia = 1, Nmol
 			Oxy(:,ia)   	= X(indx+0:indx+2) 
 			Hydro(:,2*ia-0) = X(indx+3:indx+5)   
@@ -569,9 +569,11 @@ endif
  write(20,'(a,1I2)') '@ legend length ', num_ind_mags
 do i = 1, num_ind_mags
 	if (i .lt. 11) then 
- 		write(20,'(a,I1,a,1f6.2,a,1f6.2,a)') '@ s', i-1, ' legend "k = ', magk_tr(i) ,'\cE\C\S-1\N \f{Symbol}l\f{Times-Roman} =', (2.0*pi)/magk_tr(i),'\cE\C" '
+ 		write(20,'(a,I1,a,1f6.2,a,1f6.2,a)') '@ s', i-1, ' legend "k = ', magk_tr(i) , & 
+				'\cE\C\S-1\N \f{Symbol}l\f{Times-Roman} =', (2.0*pi)/magk_tr(i),'\cE\C" '
 	else
- 		write(20,'(a,I2,a,1f6.2,a,1f6.2,a)') '@ s', i-1, ' legend "k =', magk_tr(i)  ,'\cE\C\S-1\N \f{Symbol}l\f{Times-Roman} =', (2.0*pi)/(i),'\cE\C" '
+ 		write(20,'(a,I2,a,1f6.2,a,1f6.2,a)') '@ s', i-1, ' legend "k =', magk_tr(i)  ,  & 
+				'\cE\C\S-1\N \f{Symbol}l\f{Times-Roman} =', (2.0*pi)/(i),'\cE\C" '
 	endif
 enddo
 
@@ -628,9 +630,11 @@ endif
  write(20,'(a,1I2)') '@ legend length ', num_ind_mags
 do i = 1, num_ind_mags
 	if (i .lt. 11) then 
- 		write(20,'(a,I1,a,1f6.2,a,1f6.2,a)') '@ s', i-1, ' legend "k = ', magk_tr(i) ,'\cE\C\S-1\N \f{Symbol}l\f{Times-Roman} =', (2.0*pi)/magk_tr(i),'\cE\C" '
+ 		write(20,'(a,I1,a,1f6.2,a,1f6.2,a)') '@ s', i-1, ' legend "k = ', magk_tr(i) , & 
+			'\cE\C\S-1\N \f{Symbol}l\f{Times-Roman} =', (2.0*pi)/magk_tr(i),'\cE\C" '
 	else
- 		write(20,'(a,I2,a,1f6.2,a,1f6.2,a)') '@ s', i-1, ' legend "k =', magk_tr(i) ,'\cE\C\S-1\N \f{Symbol}l\f{Times-Roman} =', (2.0*pi)/(i),'\cE\C" '
+ 		write(20,'(a,I2,a,1f6.2,a,1f6.2,a)') '@ s', i-1, ' legend "k =', magk_tr(i) ,  & 
+			'\cE\C\S-1\N \f{Symbol}l\f{Times-Roman} =', (2.0*pi)/(i),'\cE\C" '
 	endif
 enddo
 

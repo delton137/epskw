@@ -106,7 +106,8 @@ do n = 1, Nk
 			tmpDc = tmpDc + Dcp
 
 			!self part contribution for this molecule
-			chik0_self(n) = chik0_self(n) +  (qOs(i)*Orp  + qHs(2*i-0)*Hrp + qHs(2*i-1)*Hrp2 + Drp )**2 + (qOs(i)*Ocp + qHs(2*i-0)*Hcp + qHs(2*i-1)*Hcp2 + Dcp)**2 
+			chik0_self(n) = chik0_self(n) +  (qOs(i)*Orp  + qHs(2*i-0)*Hrp + & 
+				qHs(2*i-1)*Hrp2 + Drp )**2 + (qOs(i)*Ocp + qHs(2*i-0)*Hcp + qHs(2*i-1)*Hcp2 + Dcp)**2 
 		enddo
 
 		rhokt(n,t) = rhokt(n,t) + dcmplx(tmpOr + tmpHr + tmpDr, tmpOc + tmpHc + tmpDc)
@@ -136,15 +137,28 @@ subroutine calc_chik_transverse
 do n = 1, Nk 
 	Pol = 0
 	do i = 1, Nmol
-		rCM = (16d0*Oxy(:,i) +  Hydro(:,2*i)  + Hydro(:,2*i-1))/18d0
+		if (TTM3F .or. TIP4P) then
+			rCM =  Msites(:,i)
+		else
+			rCM = (16d0*Oxy(:,i) +  Hydro(:,2*i)  + Hydro(:,2*i-1))/18d0
+		endif
+		
 		mPol = 0
 		do j = 1,3
 			if (j .eq. 1) raj = Oxy(:,i) - rCM
 			if (j .eq. 2) raj = Hydro(:,2*i-0) - rCM
 			if (j .eq. 3) raj = Hydro(:,2*i-1) - rCM
-			if (j .eq. 1) q = qO
-			if (j .eq. 2) q = qH
-			if (j .eq. 3) q = qH
+
+
+			if (TTM3F) then 
+				if (j .eq. 1) q = qOs(i)
+				if (j .eq. 2) q = qHs(2*i-0)
+				if (j .eq. 3) q = qHs(2*i-1)
+			else
+				if (j .eq. 1) q = qO
+				if (j .eq. 2) q = qH
+				if (j .eq. 3) q = qH
+			endif
 
 			kdotr = dot_product(kvec(:,n),raj)
 			if (kdotr /= 0.0) then
@@ -165,6 +179,8 @@ do n = 1, Nk
 		kdotr = dot_product(kvec(:,n),rCM)
 
 		Pol = Pol + mPol*exp( dcmplx(0, -1)*kdotr )
+
+		if (TTM3F) Pol = Pol + Pdip(:,i)*0.20819434d0*exp( dcmplx(0, -1)*kdotr )
 
 	enddo! i = 1, Nmol
  		
