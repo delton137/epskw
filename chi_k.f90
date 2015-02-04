@@ -58,7 +58,7 @@ end subroutine calc_chik
 subroutine calc_chik_transverse
  use main_stuff
  Implicit none 
- real(8), dimension(3) :: rCM, raj
+ real(8), dimension(3) :: rCM, raj, rOH1, rOH2 
  real(8) :: magraj, q, kdotr
  double complex, dimension(3) :: mPol !polarization vector for molecule
  double complex, dimension(3) :: Pol !total polarization vector at that k
@@ -67,7 +67,13 @@ subroutine calc_chik_transverse
 do n = 1, Nk 
 	Pol = 0
 	do i = 1, Nmol
-		rCM = (16d0*Oxy(:,i) +  Hydro(:,2*i)  + Hydro(:,2*i-1))/18d0
+
+		!find center of mass of molecule
+		rOH1 = Hydro(:,2*i-0) - Oxy(:,i)
+		rOH2 = Hydro(:,2*i-1) - Oxy(:,i)
+		rOH1 = rOH1 - boxlength*anint(rOH1/boxlength)!PBC
+		rOH2 = rOH2 - boxlength*anint(rOH2/boxlength)!PBC
+		rCM = (16d0*Oxy(:,i) +  2d0*Oxy(:,i) + rOH1 + rOH2)/18d0
 		mPol = 0
 		do j = 1,3
 			if (j .eq. 1) raj = Oxy(:,i) - rCM
@@ -102,9 +108,9 @@ do n = 1, Nk
 
 		kdotr = dot_product(kvec(:,n),rCM)
 
-		if (TTM3F)  mPol = mPol + Pdip(:,i)*0.20819434d0!convert Debye to eAng
-
 		Pol = Pol + mPol*exp( dcmplx(0, -1)*kdotr )
+
+		if (TTM3F)  Pol = Pol + Pdip(:,i)*0.20819434d0*exp( dcmplx(0, -1)*dot_product(kvec(:,n),Msites(:,i)) )
 
 	enddo! i = 1, Nmol
  		
