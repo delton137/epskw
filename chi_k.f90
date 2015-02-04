@@ -128,7 +128,7 @@ end subroutine calc_chik_TTM3F
 subroutine calc_chik_transverse
  use main_stuff
  Implicit none 
- real(8), dimension(3) :: rCM, raj
+ real(8), dimension(3) :: rCM, raj, rOH1, rOH2
  real(8) :: magraj, q, kdotr
  double complex, dimension(3) :: mPol !polarization vector for molecule
  double complex, dimension(3) :: Pol !total polarization vector at that k
@@ -137,17 +137,26 @@ subroutine calc_chik_transverse
 do n = 1, Nk 
 	Pol = 0
 	do i = 1, Nmol
-		if (TTM3F .or. TIP4P) then
-			rCM =  Msites(:,i)
-		else
-			rCM = (16d0*Oxy(:,i) +  Hydro(:,2*i)  + Hydro(:,2*i-1))/18d0
-		endif
+		!find center of mass of molecule
+		rOH1 = Hydro(:,2*i-0) - Oxy(:,i)
+		rOH2 = Hydro(:,2*i-1) - Oxy(:,i)
+		rOH1 = rOH1 - box*anint(rOH1/box)!PBC
+		rOH2 = rOH2 - box*anint(rOH2/box)!PBC
+		rCM = (16d0*Oxy(:,i) +  2d0*Oxy(:,i) + rOH1 + rOH2)/18d0
 		
 		mPol = 0
 		do j = 1,3
-			if (j .eq. 1) raj = Oxy(:,i) - rCM
+			if (j .eq. 1) then 
+				if (TTM3F) then
+					raj = Msites(:,i) - rCM
+				else 
+					raj = Oxy(:,i) - rCM
+				endif
+			endif
 			if (j .eq. 2) raj = Hydro(:,2*i-0) - rCM
 			if (j .eq. 3) raj = Hydro(:,2*i-1) - rCM
+
+			raj = raj - box*anint(raj/box)!PBC
 
 
 			if (TTM3F) then 
@@ -180,7 +189,7 @@ do n = 1, Nk
 
 		Pol = Pol + mPol*exp( dcmplx(0, -1)*kdotr )
 
-		if (TTM3F) Pol = Pol + Pdip(:,i)*0.20819434d0*exp( dcmplx(0, -1)*kdotr )
+		if (TTM3F) Pol = Pol + Pdip(:,i)*0.20819434d0*exp( dcmplx(0, -1)*dot_product(kvec(:,n),Msites(:,i)) )
 
 	enddo! i = 1, Nmol
  		

@@ -197,6 +197,7 @@ if (filetype .eq. "xyz") then
 	
 	Nmol = Na/3
 	write(*,*) "Number of molecules: ", Nmol
+	write(*,*) "Box size (user specified) is :", box
 endif
 if (filetype .eq. "xtc") then 
         allocate(X(3*Na))
