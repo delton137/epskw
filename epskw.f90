@@ -105,8 +105,7 @@ do n = 1, Nk
 	chik0_self(n) = chik0_self(n)/(magk(n)**2)
 enddo
 
-
- call truncate
+ call truncate     !Truncate
 
  Nk = num_ind_mags !Nk changes here!!
 
@@ -135,7 +134,6 @@ endif
  chik0_self_tr = prefac*chik0_self_tr/(dble(nsteps)) 
  chik0_err_tr  = prefac*chik0_err_tr/(dble(nsteps))
  str_fackt_tr  = str_fackt_tr/(dble(Nmol)*dble(nsteps))  
-
 
 do n = 1, num_ind_mags
  	chik0_tr(n) = chik0_tr(n)/(magk_tr(n)**2)

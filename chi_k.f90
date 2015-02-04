@@ -71,8 +71,8 @@ do n = 1, Nk
 		!find center of mass of molecule
 		rOH1 = Hydro(:,2*i-0) - Oxy(:,i)
 		rOH2 = Hydro(:,2*i-1) - Oxy(:,i)
-		rOH1 = rOH1 - boxlength*anint(rOH1/boxlength)!PBC
-		rOH2 = rOH2 - boxlength*anint(rOH2/boxlength)!PBC
+		rOH1 = rOH1 - box*anint(rOH1/box)!PBC
+		rOH2 = rOH2 - box*anint(rOH2/box)!PBC
 		rCM = (16d0*Oxy(:,i) +  2d0*Oxy(:,i) + rOH1 + rOH2)/18d0
 		mPol = 0
 		do j = 1,3
@@ -175,7 +175,8 @@ do n = 1, Nk
 			tmpDc = tmpDc + Dcp
 
 			!self part contribution for this molecule
-			chik0_self(n) = chik0_self(n) +  (qOs(i)*Orp  + qHs(2*i-0)*Hrp + qHs(2*i-1)*Hrp2 + Drp )**2 + (qOs(i)*Ocp + qHs(2*i-0)*Hcp + qHs(2*i-1)*Hcp2 + Dcp)**2 
+			chik0_self(n) = chik0_self(n) +  (qOs(i)*Orp  + qHs(2*i-0)*Hrp + & 
+				qHs(2*i-1)*Hrp2 + Drp )**2 + (qOs(i)*Ocp + qHs(2*i-0)*Hcp + qHs(2*i-1)*Hcp2 + Dcp)**2 
 		enddo
 
 		rhokt(n,t) = rhokt(n,t) + dcmplx(tmpOr + tmpHr + tmpDr, tmpOc + tmpHc + tmpDc)
