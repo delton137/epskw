@@ -49,6 +49,7 @@ subroutine truncate
 !truncate all the results and figure out error bars for certain things
 ix = 1
 do n = 1, num_ind_mags
+
 	magk_tr(n) =   sum( magk(ix:ix+num_this_mag(n)-1))/real(num_this_mag(n)) 
 
 	chik0_tr(n) =  sum(chik0(ix:ix+num_this_mag(n)-1))/real(num_this_mag(n)) 
