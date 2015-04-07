@@ -49,13 +49,8 @@ Do t = 1, maxsteps
 		goto 1000 
 	endif 
 
-	if (TTM3F) then 
-		call calc_chik_TTM3F
-	else	
-	 	call calc_chik 
-	endif 
-
-	call calc_chik_transverse
+ 	call calc_chik
+ 	call calc_chikL
 
 	if (mod(t,10) .eq. 0) write(*,*) t  
 
@@ -98,6 +93,7 @@ enddo
 !--------------------------------------------------------------------------------- 
 !----------------  truncate results to k with different magnitudes -------------- 
 !--------------------------------------------------------------------------------- 
+ chik0           = prefac*chik0/(magk(1)**2) 
  call truncate
 
  Nk = num_ind_mags !Nk changes here!!

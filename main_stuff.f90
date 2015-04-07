@@ -24,16 +24,15 @@ double complex, dimension(:,:,:), allocatable :: polTkt, polTkt_tr
 real(8), dimension(:),allocatable :: qHs, qOs
 real(8), dimension(:,:),allocatable :: Pdip
 real(8), dimension(3) :: v1, v2, v3, summ, box, ibox
-real(8) ::  tmpOr, tmpOc, tmpHr, tmpHc, Orp, Ocp, Hrp, Hcp,  Hrp2, Hcp2, junkmag, muL
-real(8) ::  tmpOr_nocharge, tmpOc_nocharge, tmpHr_nocharge, tmpHc_nocharge, tmpDr, tmpDc, Drp, Dcp
+real(8) ::    junkmag, muL
  character(len=3) :: sym
  character(120)   :: fileinp
  character(120) :: TTM3F_dip_input,TTM3F_input,fileheader,model
-real(8) :: vol,  maxk, qO, qH, qO2, qH2, temp,  qOqH, delta
+real(8) :: vol,  maxk,     temp,  qOqH, delta
 real(8) :: prefac,  r, seconds, rOM, timestep, max_freq,  max_diag
 integer :: Na, Nmol, i, j, k, l, ia, ix, nsteps, nsteps_out, w
 integer :: npts, t, n, Nk, ierror,  Nw, num_face_diagonals, num_body_diagonals
-logical :: TIP4P, GRIDSAMPLE, TTM3F, SMALLKSET
+logical :: TIP4P=.false., GRIDSAMPLE, TTM3F, SMALLKSET
 logical :: CHECK_TRAJECTORY_LENGTH, DYNAMIC_STR_FAC
 real(8), parameter :: pi = 3.14159265d0 
 real(8), parameter :: kb = 1.3806488d-23 ! Jul/Kelvin
@@ -54,6 +53,11 @@ real(4), dimension(:),allocatable, save :: X
 !Fourier transform stuff
 complex, dimension(:), allocatable :: aux1,vcross 
 integer :: trun, tread
+!Setting up model / reading .xtc stuff
+integer :: AtomsPerMol
+real(8), dimension(:), allocatable :: qs
+real(4), dimension(:,:,:), allocatable :: atoms
+
 
 
  contains 
@@ -76,8 +80,6 @@ read(5,*) num_face_diagonals
 read(5,*) num_body_diagonals
 read(5,*) max_diag
 read(5,*) model
-read(5,*) qO
-read(5,*) qH
 read(5,*) maxsteps
 read(5,*) Na
 read(5,*) timestep
@@ -91,72 +93,94 @@ end subroutine read_input_file
 !--------------------------- set up model ------------------------------------
 !------------------------------------------------------------------------------
 subroutine set_up_model
+
+
 if (model == 'spce') then
-	qO = -.8476d0
-	qH = .4238d0
-	TIP4P = .false. 
 	write(*,*) "Model is SPC/E"
+	AtomsPerMol = 3
+	allocate(qs(AtomsPerMol))
+ 	qs(1)     = -.8476d0
+	qs([2,3]) = .4238d0
+ 
 else if (model == 'tip3p') then
-	qO = -0.834d0
-	qH =  0.417d0 	
-	rMH = 0.9572d0
-	rHH = 1.5139d0
-	TIP4P = .false. 
 	write(*,*) "Model is TIP3P"
+	AtomsPerMol = 3
+	allocate(qs(AtomsPerMol))
+ 	qs(1)     = -0.834d0
+	qs([2,3]) =  0.417d0 	
+
 else if ((model == 'tip4eps') .or. (model == 'TIP4eps')) then
-	qO = -1.054d0
-	qH =  0.527d0
-	rOM = .105d0
-	rHH = 1.513900d0
-	rMH = 0.896784d0
-	TIP4P = .true. 
 	write(*,*) "Model is TIP4eps"
+	AtomsPerMol = 3
+	allocate(qs(AtomsPerMol))
+	qs(1)     = -1.054d0
+	qs([2,3]) =  0.527d0
+	TIP4P = .true. 
+
 else if (model == 'tip4p') then
-	qO = -1.04d0
-	qH = .52d0
-	rOM = .15d0
-	TIP4P = .true.
 	write(*,*) "Model is TIP4P"
+	AtomsPerMol = 3
+	allocate(qs(AtomsPerMol))
+	qs(1) = -1.04d0
+	qs([2,3]) = .52d0
+	TIP4P = .true.
+
 else if (model == 'tip4p2005') then
-	qO = -1.1128d0
-	qH = .5564d0
-	rOM = .15555d0
-	rHH = 1.513900d0
-	rMH = 0.896784d0
-	TIP4P = .true.
 	write(*,*) "Model is TIP4P/2005"
-else if (model == 'tip4p2005f') then
-	qO = -1.1128d0	
-	qH = .5564d0
-	rOM = .1546d0
-	rHH = 1.513900 !these are TIP4P/2005
-	rMH = 0.896784
+	AtomsPerMol = 3
+	allocate(qs(AtomsPerMol))
+	qs(1)     = -1.1128d0
+	qs([2,3]) = .5564d0
 	TIP4P = .true.
+
+else if (model == 'tip4p2005f') then
 	write(*,*) "Model is TIP4P/2005f"
+	AtomsPerMol = 3
+	allocate(qs(AtomsPerMol))
+	qs(1)     = -1.1128d0	
+	qs([2,3]) = .5564d0
+	TIP4P = .true.
+
 else if ((model == 'ttm3') .or. (model == 'ttm3f')) then
 	write(*,*) "Model is TTM3F"
-	qO = -1	
-	qH = .5
-	rOM = 0.4646
+	AtomsPerMol = 3
+	allocate(qs(AtomsPerMol))
+	qs(1)     = -1	
+	qs([2,3]) = .5
 	TIP4P = .true.
 	TTM3F = .true.
+else if (model == 'methanol') then
+	write(*,*) "Model is methanol with H1+3 parameters"
+	AtomsPerMol = 3
+	allocate(qs(AtomsPerMol))
+	qs(1)  = .297 !C atom
+	qs(2)  = -.728!O atom
+	qs(3)  = .431 !OH hydrogen
+else if (model == 'acetonitrile') then
+	write(*,*) "Model is acetonitrile with GAFF forcefield parameters"
+	AtomsPerMol = 6
+	allocate(qs(AtomsPerMol))
+	qs(1)  = -.4008 !C3 
+	qs(2)  = .15640 !H1 
+	qs(3)  = .15640 !H2 	
+	qs(4)  = .15640 !H3 	
+	qs(5)  = .44840 !C2 	
+	qs(6)  = -.5168 !N1 
 else 
-		write(*,*) "Model is generic 3 site"
-	qO = -1d0	
-	qH = .5d0
-	rOM = .1546
-	rHH = 1.513900  
-	rMH = 0.896784
+	write(*,*) "Model is generic 3 site water model"
+	AtomsPerMol = 3
+	allocate(qs(AtomsPerMol))
+	qs(1)     = -1d0	
+	qs([2,3]) = .5d0
 	TIP4P = .false.
 endif 
-if ( .not. (qO + 2*qH .eq. 0) ) then
-	write(*,*) "ERROR in charge values!!"
+if ( .not. (sum(qs) .eq. 0.0) ) then
+	write(*,*) "ERROR in charge values!! - sum of charges not equal to zero = ", sum(qs)
 	stop
 endif
 
 if (DYNAMIC_STR_FAC) then
-	qO = 1d0         !15.9994d0
-	qH = 1d0         !1.008d0
+	qs = 1
 endif
 
 end subroutine set_up_model
@@ -199,6 +223,9 @@ if (filetype .eq. "xyz") then
 	write(*,*) "Number of molecules: ", Nmol
 	write(*,*) "Box size (user specified) is :", box
 endif
+!-----------------------------------------------------------------------
+!--------------------  Initial check of xtc  -------------------------- 
+!-----------------------------------------------------------------------
 if (filetype .eq. "xtc") then 
         allocate(X(3*Na))
      	NAT = Na
@@ -218,27 +245,26 @@ if (filetype .eq. "xtc") then
 	box(2) = XTCBOX(5)*10
 	box(3) = XTCBOX(9)*10
 
-	if (TIP4P) then
-		Nmol = Na/4
-	else
-		Nmol = Na/3
-	endif
-    	write(*,*) "Reading XTC. If this is a  4 site model we assume all 4 sites are in the XTC."
+	Nmol = Na/AtomsPerMol
+
+    	write(*,*) "Reading XTC. If this is a  4 site water model we assume all 4 sites are in the XTC."
      	write(*,*) "We assume the units are nm in the .xtc. They will be converted to Ang."
 endif 
 
 write(*,*) "number of atoms = ", Na
+write(*,*) "atoms per molecule = ", AtomsPerMol
 write(*,*) "number of molecules =", Nmol
 
-if (TIP4P) allocate(Msites(3,Nmol))
-allocate(Oxy(3,Nmol))
-allocate(Hydro(3,Nmol*2))
-if (TTM3F) allocate(qOs(Nmol))
-if (TTM3F) allocate(qHs(2*Nmol))
-if (TTM3F) allocate(Pdip(3,NmoL))
-
-
+if (.not. TTM3F) then 
+	allocate(atoms(3,AtomsPerMol,Nmol))
+endif
 if (TTM3F) then 
+	allocate(Oxy(3,Nmol))
+	allocate(Hydro(3,Nmol*2))
+	allocate(qOs(Nmol))
+	allocate(qHs(2*Nmol))
+	allocate(Pdip(3,NmoL))
+
 	open(50,file=fileinp(1:LEN_TRIM(fileinp)-9)//"chgs.dat",status="old",action="read",iostat=ierror)
 	if (ierror /= 0) then
 		write(*,*) "ERROR opening TTM3F charge file"
@@ -463,33 +489,43 @@ subroutine read_trajectory_frame
 		write(*,*) "measured timestep is ", OLDTIME - TIME , " ps" 
 	endif 
 
-	!move coords from the X(:) array to the Oxy & Hydro arrays
-	indx = 1
-	!four site model case - the m sites are in the .xtc, these are considered the "oxy"
+	indx = 1 
+	!general case of an arbitrary molecule w charge on each site
+	do j = 1, Nmol
+ 		do i = 1, AtomsPerMol
+			atoms(:, i, j) = X(indx+0:indx+2)
+			indx = indx + 3
+		enddo 
+	enddo
+	!four site model special case - the m sites are in the .xtc, these are considered the "oxy"
+	!the first coordinates in each molecule (for Oxygen) are skipped 
 	if (TIP4P .eqv. .true.) then
-		do ia = 1, Nmol
-			Oxy(:,ia)   	= X(indx+0:indx+2) 
-			Hydro(:,2*ia-0) = X(indx+3:indx+5)   
-			Hydro(:,2*ia-1) = X(indx+6:indx+8) 
-			Oxy(:,ia)    = X(indx+9:indx+11)  
-			indx = indx+12	
+		do j = 1, Nmol
+			atoms(:,1,j)  = X(indx+3:indx+5)   
+			atoms(:,2,j)  = X(indx+6:indx+8) 
+			atoms(:,3,j)  = X(indx+9:indx+11)  
+			indx = indx + 12	
 		enddo
-	else
-	!three site model case
-		do ia = 1, Nmol
-			Hydro(:,2*ia-0) = X(indx+0:indx+2)   
-			Hydro(:,2*ia-1) = X(indx+3:indx+5)   
-			Oxy(:,ia)       = X(indx+6:indx+8)  
-			indx = ia*9  	
+	endif
+	!methanol model special case
+	!the 3 dummy hydrogens are skipped
+	if (TIP4P .eqv. .true.) then
+		do j = 1, Nmol
+			atoms(:,1,j)  = X(indx+0:indx+2)  !C 
+			atoms(:,2,j)  = X(indx+12:indx+14)!O
+			atoms(:,3,j)  = X(indx+15:indx+17)!H
+			indx = indx + 18	
 		enddo
 	endif
 
 	!Convert to Angstroms for consistancy
-	Hydro = 10*Hydro
-	Oxy = 10*Oxy
-	if (TIP4P) Msites = 10*Msites
+	atoms = atoms*10
   endif
+
   !----------- Reading xyz------------------------
+  ! xyz support currently defunct 
+  ! it is kept for TTM3F support. For non-TTM3F it will not work!!
+  
   if (filetype .eq. "xyz") then
         read(12,*)
 	read(12,*)

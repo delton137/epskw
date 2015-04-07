@@ -1,134 +1,15 @@
 !--------------------------------------------------------------------------
-!----- In the interest of maintaining the speed for non-TTM3F  -----------
-!----- calculations we have a seperate subroutine for TTM3F --------------
+!---------------- Calculate polarization vectors -------------------------
 !--------------------------------------------------------------------------
-
 module chi_k
 Implicit none 
 
 contains 
 
-!--------------------------------------------------------------------------
-!----------------  Longitudinal chi(k) & structure factor calculation ----
-!--------------------------------------------------------------------------
-subroutine calc_chik
+subroutine calc_chik 
  use main_stuff
  Implicit none 
-
-do n = 1, Nk 
-		tmpOr = 0 
-		tmpOc = 0
-		tmpHr = 0
-		tmpHc = 0 
-		!longitudinal part 
-		do i = 1, Nmol
-			!Oxygens 
-			Orp = dcos( dot_product(kvec(:,n),Oxy(:,i)) )
-			Ocp = dsin( dot_product(kvec(:,n),Oxy(:,i)) ) 
-
-			tmpOr = tmpOr + Orp 
-			tmpOc = tmpOc + Ocp
- 
-			!Hydrogens
-			Hrp = dcos( dot_product(kvec(:,n),Hydro(:,2*i-0)) )  & 
-			    + dcos( dot_product(kvec(:,n),Hydro(:,2*i-1)) )
-			Hcp = dsin( dot_product(kvec(:,n),Hydro(:,2*i-0)) )  &
-			    + dsin( dot_product(kvec(:,n),Hydro(:,2*i-1)) )	
-
-			tmpHr = tmpHr + Hrp
-			tmpHc = tmpHc + Hcp	
-	
-			!self part contribution for this moleucle
-			chik0_self(n) = chik0_self(n) +  (qO*Orp + qH*Hrp)**2 + (qO*Ocp + qH*Hcp)**2 
-		enddo
-
-		rhokt(n,t) = rhokt(n,t) + dcmplx(qO*tmpOr + qH*tmpHr, qO*tmpOc + qH*tmpHc)
-
-		chik0(n)   = chik0(n)   + (qO*tmpOr + qH*tmpHr)**2 +  (qO*tmpOc + qH*tmpHc)**2
-
-		str_fackt(n,t) = str_fackt(n,t) +  (tmpOr    +    tmpHr)**2 +  (tmpOc    +    tmpHc)**2
-enddo
-
-
-end subroutine calc_chik
-
-
-!--------------------------------------------------------------------------
-!----------------  Longitudinal chi(k) & structure factor calculation - TTM3F
-!--------------------------------------------------------------------------
-subroutine calc_chik_TTM3F
- use main_stuff
- Implicit none 
-
-do n = 1, Nk 
-		tmpOr = 0 
-		tmpOc = 0
-		tmpHr = 0
-		tmpHc = 0 
-		tmpDr = 0 
-		tmpDc = 0 
-		tmpHr_nocharge = 0 
-		tmpHr_nocharge = 0 
-		!longitudinal part 
-		do i = 1, Nmol
-			!Oxygens 
-			Orp = dcos( dot_product(kvec(:,n),Oxy(:,i)) )
-			Ocp = dsin( dot_product(kvec(:,n),Oxy(:,i)) ) 
-
-			tmpOr = tmpOr + qOs(i)*Orp 
-			tmpOc = tmpOc + qOs(i)*Ocp
-
-			tmpOr_nocharge  = tmpOr + Orp 
-			tmpOc_nocharge  = tmpOc + Ocp
- 
-			!Hydrogens
-			!first hydro
-			Hrp = dcos( dot_product(kvec(:,n),Hydro(:,2*i-0)) )   
-			Hcp = dsin( dot_product(kvec(:,n),Hydro(:,2*i-0)) )  
-
-			!second hydro
-			Hrp2 = dcos( dot_product(kvec(:,n),Hydro(:,2*i-1)) )
-			Hcp2 = dsin( dot_product(kvec(:,n),Hydro(:,2*i-1)) )	
-
-			tmpHr = tmpHr + qHs(2*i-0)*Hrp + qHs(2*i-1)*Hrp2
-			tmpHc = tmpHc + qHs(2*i-0)*Hcp + qHs(2*i-1)*Hcp2
-
-			tmpHr_nocharge  = tmpHr_nocharge  + Hrp + Hrp2
-			tmpHc_nocharge  = tmpHc_nocharge  + Hcp + Hcp2
-
-			!contribution of the point dipole (cf Bertolini Tani Mol Phys 75 1065)
-			muL = dot_product(kvec(:,n),Pdip(:,i))*0.20819434d0  !convert Debye to eAng
-
-			Drp = muL*dcos( dot_product(kvec(:,n),Msites(:,i)) )
-			Dcp = muL*dsin( dot_product(kvec(:,n),Msites(:,i)) )
-			
-			tmpDr = tmpDr + Drp 
-			tmpDc = tmpDc + Dcp
-
-			!self part contribution for this molecule
-			chik0_self(n) = chik0_self(n) +  (qOs(i)*Orp  + qHs(2*i-0)*Hrp + & 
-				qHs(2*i-1)*Hrp2 + Drp )**2 + (qOs(i)*Ocp + qHs(2*i-0)*Hcp + qHs(2*i-1)*Hcp2 + Dcp)**2 
-		enddo
-
-		rhokt(n,t) = rhokt(n,t) + dcmplx(tmpOr + tmpHr + tmpDr, tmpOc + tmpHc + tmpDc)
-
-		chik0(n)   = chik0(n)   + (tmpOr + tmpHr + tmpDr)**2 +  (tmpOc + tmpHc + tmpDc)**2
-
-		str_fackt(n,t) = str_fackt(n,t) +  (tmpOr_nocharge + tmpHr_nocharge )**2  +  (tmpOc_nocharge + tmpHc_nocharge)**2
-enddo
-
-
-end subroutine calc_chik_TTM3F
-
-
-
-!--------------------------------------------------------------------------
-!----------------  Transverse chi(k) calculation ---------------------------
-!--------------------------------------------------------------------------
-subroutine calc_chik_transverse
- use main_stuff
- Implicit none 
- real(8), dimension(3) :: rCM, raj, rOH1, rOH2
+ real(8), dimension(3) :: rCM, raj 
  real(8) :: magraj, q, kdotr
  double complex, dimension(3) :: mPol !polarization vector for molecule
  double complex, dimension(3) :: Pol !total polarization vector at that k
@@ -137,69 +18,102 @@ subroutine calc_chik_transverse
 do n = 1, Nk 
 	Pol = 0
 	do i = 1, Nmol
-		!find center of mass of molecule
-		rOH1 = Hydro(:,2*i-0) - Oxy(:,i)
-		rOH2 = Hydro(:,2*i-1) - Oxy(:,i)
-		rOH1 = rOH1 - box*anint(rOH1/box)!PBC
-		rOH2 = rOH2 - box*anint(rOH2/box)!PBC
-		rCM = (16d0*Oxy(:,i) +  2d0*Oxy(:,i) + rOH1 + rOH2)/18d0
-		
-		mPol = 0
-		do j = 1,3
-			if (j .eq. 1) then 
-				if (TTM3F) then
-					raj = Msites(:,i) - rCM
-				else 
-					raj = Oxy(:,i) - rCM
-				endif
-			endif
-			if (j .eq. 2) raj = Hydro(:,2*i-0) - rCM
-			if (j .eq. 3) raj = Hydro(:,2*i-1) - rCM
+		!find geometrical center of each molecule
+		!(not really center of mass)
+		RCM = 0 
+		do j = 1, AtomsPerMol		
+			RCM = RCM + atoms(:,j,i)
+		enddo
+		RCM = RCM/AtomsPerMol
 
+		mPol = 0
+
+		!if TTM3F load charges for each atom
+		if (TTM3F) then 
+			if (j .eq. 1) qs(1) = qOs(i)
+			if (j .eq. 2) qs(2) = qHs(2*i-0)
+			if (j .eq. 3) qs(3) = qHs(2*i-1)
+		endif
+
+		do j = 1, AtomsPermol
+			raj = atoms(:,j,i) - rCM
 			raj = raj - box*anint(raj/box)!PBC
 
-
-			if (TTM3F) then 
-				if (j .eq. 1) q = qOs(i)
-				if (j .eq. 2) q = qHs(2*i-0)
-				if (j .eq. 3) q = qHs(2*i-1)
-			else
-				if (j .eq. 1) q = qO
-				if (j .eq. 2) q = qH
-				if (j .eq. 3) q = qH
-			endif
-
 			kdotr = dot_product(kvec(:,n),raj)
+
 			if (kdotr /= 0.0) then
-				mPol = mPol - dcmplx(0, 1)*( q*raj/kdotr )*( exp( dcmplx(0, 1)*kdotr ) - 1d0 ) 
+				mPol = mPol - dcmplx(0, 1)*( qs(j)*raj/kdotr )*( exp( dcmplx(0, 1)*kdotr ) - 1d0 ) 
 			endif
 
-		enddo !j = 1,3
-
-		if (mPol(1) /= mPol(1) ) then
-			write(*,*) "ERROR in transverse polarization!! NaN Debug Info:"
-			write(*,*) "molecule ", i
-			write(*,*) "atom ", j
-			write(*,*) "n ", n
-			write(*,*) "Pol = ", Pol
-			write(*,*) "mPol = ", mPol
-		endif
+		enddo!j = 1, AtomsPermol
 
 		kdotr = dot_product(kvec(:,n),rCM)
 
 		Pol = Pol + mPol*exp( dcmplx(0, -1)*kdotr )
-
+	
+		!if TTM3F add polarization vector
 		if (TTM3F) Pol = Pol + Pdip(:,i)*0.20819434d0*exp( dcmplx(0, -1)*dot_product(kvec(:,n),Msites(:,i)) )
 
 	enddo! i = 1, Nmol
  		
 	PolTkt(n,t,:) = cross_product(kvec(:,n) , Pol)
+	!rhokt(n,t)    = dot_product(kvec(:,n) , Pol)
 
 enddo! n = 1, Nk 
 
+end subroutine calc_chik 
 
-end subroutine calc_chik_transverse
 
+
+!--------------------------------------------------------------------------
+!------  Longitudinal chi(k) & structure factor calculation for H2O ------
+!--------------------------------------------------------------------------
+subroutine calc_chikL
+ use main_stuff
+ Implicit none 
+ real(8) :: qRP, qCP, rRP, rCP, molRp, molCP
+
+do n = 1, Nk 
+	qRP = 0 
+	qCP = 0 
+ 	!longitudinal part 
+	do j = 1, Nmol
+		molRP = 0		
+		molCP = 0 
+
+		!if TTM3F load charges for each atom and add point dipole
+		!(cf Bertolini Tani Mol Phys 75 1065)
+		if (TTM3F) then 
+			if (j .eq. 1) qs(1) = qOs(j)
+			if (j .eq. 2) qs(2) = qHs(2*j-0)
+			if (j .eq. 3) qs(3) = qHs(2*j-1)
+
+			muL = dot_product(kvec(:,n),Pdip(:,i))*0.20819434d0  !convert Debye to eAng
+			molRP = molRP + muL*dcos( dot_product(kvec(:,n),Msites(:,i)) )
+			molCP = molcP + muL*dsin( dot_product(kvec(:,n),Msites(:,i)) )
+		endif
+
+		!molecular longitudinal polarization
+		do i = 1, AtomsPerMol
+			molRP = molRP + qs(i)*dcos( dot_product(kvec(:,n),atoms(:,i,j)) )
+			molCP = molCP + qs(i)*dsin( dot_product(kvec(:,n),atoms(:,i,j)) ) 
+		enddo
+ 
+		!self part contribution for this moleucle
+		chik0_self(n) = chik0_self(n) +  molRP**2 + molCP**2
+
+		qRP = qRP + molRP
+		qCP = qCP + molCP
+
+ 	enddo!do j = 1, Nmol 
+
+	rhokt(n,t) = rhokt(n,t) + dcmplx(qRP, qCP)
+
+	chik0(n)   = chik0(n) + qRP**2 + qCP**2
+
+	str_fackt(n,t) = 0 !defunct! str_fackt(n,t) +  (tmpOr    +    tmpHr)**2 +  (tmpOc    +    tmpHc)**2
+enddo
+end subroutine calc_chikL 
 
 
 
