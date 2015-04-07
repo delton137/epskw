@@ -33,7 +33,7 @@ real(8) :: prefac,  r, seconds, rOM, timestep, max_freq,  max_diag
 integer :: Na, Nmol, i, j, k, l, ia, ix, nsteps, nsteps_out, w
 integer :: npts, t, n, Nk, ierror,  Nw, num_face_diagonals, num_body_diagonals
 logical :: TIP4P=.false., GRIDSAMPLE, TTM3F, SMALLKSET
-logical :: CHECK_TRAJECTORY_LENGTH, DYNAMIC_STR_FAC
+logical :: CHECK_TRAJECTORY_LENGTH, DYNAMIC_STR_FAC, ALT_CALC
 real(8), parameter :: pi = 3.14159265d0 
 real(8), parameter :: kb = 1.3806488d-23 ! Jul/Kelvin
 real(8), parameter :: eps_0 = 8.85418781d-12 ! F/m = C^2/Jul/m
@@ -67,8 +67,7 @@ real(4), dimension(:,:,:), allocatable :: atoms
 !--------------------------------------------------------------------------
 subroutine read_input_file
 
-!----------------------- open input file and read --------------------------
-!Open(5,file="eps_k.inp",status="old",action="read",iostat=ierror)
+!read from input stream 
 read(5,*) fileinp
 read(5,*) filetype 
 read(5,*) fileheader
@@ -85,15 +84,15 @@ read(5,*) Na
 read(5,*) timestep
 read(5,*) SMALLKSET
 read(5,*) nsteps_out
+read(5,*) ALT_CALC
 read(5,*) DYNAMIC_STR_FAC
-!close(5)
+
 end subroutine read_input_file
 
 !------------------------------------------------------------------------------
 !--------------------------- set up model ------------------------------------
 !------------------------------------------------------------------------------
 subroutine set_up_model
-
 
 if (model == 'spce') then
 	write(*,*) "Model is SPC/E"
@@ -149,6 +148,7 @@ else if ((model == 'ttm3') .or. (model == 'ttm3f')) then
 	qs([2,3]) = .5
 	TIP4P = .true.
 	TTM3F = .true.
+
 else if (model == 'methanol') then
 	write(*,*) "Model is methanol with H1+3 parameters"
 	AtomsPerMol = 3
@@ -156,6 +156,7 @@ else if (model == 'methanol') then
 	qs(1)  = .297 !C atom
 	qs(2)  = -.728!O atom
 	qs(3)  = .431 !OH hydrogen
+
 else if (model == 'acetonitrile') then
 	write(*,*) "Model is acetonitrile with GAFF forcefield parameters"
 	AtomsPerMol = 6
@@ -166,6 +167,7 @@ else if (model == 'acetonitrile') then
 	qs(4)  = .15640 !H3 	
 	qs(5)  = .44840 !C2 	
 	qs(6)  = -.5168 !N1 
+
 else 
 	write(*,*) "Model is generic 3 site water model"
 	AtomsPerMol = 3
@@ -246,6 +248,8 @@ if (filetype .eq. "xtc") then
 	box(3) = XTCBOX(9)*10
 
 	Nmol = Na/AtomsPerMol
+	if (TIP4P) Nmol = Na/4
+	if (model == 'methanol') Nmol = Na/6
 
     	write(*,*) "Reading XTC. If this is a  4 site water model we assume all 4 sites are in the XTC."
      	write(*,*) "We assume the units are nm in the .xtc. They will be converted to Ang."
@@ -490,31 +494,31 @@ subroutine read_trajectory_frame
 	endif 
 
 	indx = 1 
-	!general case of an arbitrary molecule w charge on each site
-	do j = 1, Nmol
- 		do i = 1, AtomsPerMol
-			atoms(:, i, j) = X(indx+0:indx+2)
-			indx = indx + 3
-		enddo 
-	enddo
 	!four site model special case - the m sites are in the .xtc, these are considered the "oxy"
 	!the first coordinates in each molecule (for Oxygen) are skipped 
 	if (TIP4P .eqv. .true.) then
 		do j = 1, Nmol
-			atoms(:,1,j)  = X(indx+3:indx+5)   
-			atoms(:,2,j)  = X(indx+6:indx+8) 
-			atoms(:,3,j)  = X(indx+9:indx+11)  
-			indx = indx + 12	
+			atoms(:,2,j)  = X(indx+3:indx+5)
+			atoms(:,3,j)  = X(indx+6:indx+8) 
+			atoms(:,1,j)  = X(indx+9:indx+11)
+			indx = indx + 12
 		enddo
-	endif
 	!methanol model special case
 	!the 3 dummy hydrogens are skipped
-	if (TIP4P .eqv. .true.) then
+	else if (model == 'methanol') then
 		do j = 1, Nmol
 			atoms(:,1,j)  = X(indx+0:indx+2)  !C 
 			atoms(:,2,j)  = X(indx+12:indx+14)!O
 			atoms(:,3,j)  = X(indx+15:indx+17)!H
 			indx = indx + 18	
+		enddo
+	else
+		!general case of an arbitrary molecule w charge on each site
+		do j = 1, Nmol
+ 			do i = 1, AtomsPerMol
+				atoms(:, i, j) = X(indx+0:indx+2)
+				indx = indx + 3
+			enddo 
 		enddo
 	endif
 
@@ -702,10 +706,17 @@ write(21,'(a)') '@ legend loctype view '
 write(21,'(a)') '@ legend 0.78, 0.8'
 write(21,'(a)') '@ legend length 2'
 write(21,'(a)') '@ s0 legend \" ", "\"" '
- do i = 1, num_ind_mags
- 	write(21,'(1f10.4,3f16.4)')  magk_tr(i), chik0_tr(i), chik0_self_tr(i), chik0_tr(i) - chik0_self_tr(i)
- enddo
- close(21)
+ if (ALT_CALC) then 
+ 	do i = 1, num_ind_mags
+ 		write(21,'(1f10.4,3f16.4)')  magk_tr(i), chik0_tr(i), chik0_self_tr(i), chik0_tr(i) - chik0_self_tr(i)
+ 	enddo
+ else 
+ 	do i = 1, num_ind_mags
+ 		write(21,'(1f10.4,1f16.4)')  magk_tr(i), chik0_tr(i)
+ 	enddo
+
+ endif
+close(21)
 
 !-------------------------------------------------------------------------------
 if (DYNAMIC_STR_FAC) then
@@ -809,25 +820,27 @@ endif
 
 
 !-------------------------------------------------------------------------------
-if (DYNAMIC_STR_FAC) then
- open(21,file=trim(fileheader)//"_mol_str_fac.dat",status="unknown")
-else
- open(18,file=trim(fileheader)//"_str_fac.dat",status="unknown")
+if (ALT_CALC) then 
+	if (DYNAMIC_STR_FAC) then
+	 open(21,file=trim(fileheader)//"_mol_str_fac.dat",status="unknown")
+	else
+ 	 open(18,file=trim(fileheader)//"_str_fac.dat",status="unknown")
+	endif
+ 	write(18,'(a)') '# This .xvg is formated for xmgrace "'
+ 	write(18,'(a)') '@ xaxis  label "k (\cE\C\S-1\N)" '
+ 	write(18,'(a)') '@ yaxis  label "S\smol\N(k,0)" '
+ 	write(18,'(a)') '@ TYPE xy '
+ 	write(18,'(a)') '@ legend on '
+ 	write(18,'(a)') '@ legend box off '
+	 write(18,'(a)') '@ legend loctype view '
+ 	write(18,'(a)') '@ legend 0.78, 0.8'
+ 	write(18,'(a)') '@ legend length 2'
+ 	write(18,'(a)') '@ s0 legend \" ", "\"" '
+	do i = 1, num_ind_mags
+ 		write(18,'(1f10.4,2f16.4)')  magk_tr(i), str_fac_tr(i)
+ 	enddo
+	 close(18)
 endif
- write(18,'(a)') '# This .xvg is formated for xmgrace "'
- write(18,'(a)') '@ xaxis  label "k (\cE\C\S-1\N)" '
- write(18,'(a)') '@ yaxis  label "S\smol\N(k,0)" '
- write(18,'(a)') '@ TYPE xy '
- write(18,'(a)') '@ legend on '
- write(18,'(a)') '@ legend box off '
- write(18,'(a)') '@ legend loctype view '
- write(18,'(a)') '@ legend 0.78, 0.8'
- write(18,'(a)') '@ legend length 2'
- write(18,'(a)') '@ s0 legend \" ", "\"" '
- do i = 1, num_ind_mags
- 	write(18,'(1f10.4,2f16.4)')  magk_tr(i), str_fac_tr(i)
- enddo
- close(18)
 
 
 

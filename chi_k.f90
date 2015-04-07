@@ -18,13 +18,15 @@ subroutine calc_chik
 do n = 1, Nk 
 	Pol = 0
 	do i = 1, Nmol
-		!find geometrical center of each molecule
+		!find geometrical charge center of each molecule
 		!(not really center of mass)
-		RCM = 0 
-		do j = 1, AtomsPerMol		
-			RCM = RCM + atoms(:,j,i)
-		enddo
-		RCM = RCM/AtomsPerMol
+		!rCM = 0 
+		!do j = 1, AtomsPerMol		
+		!	rCM = rCM + atoms(:,j,i)
+		!enddo
+		!rCM = rCM/AtomsPerMol
+		!use first atom in system as reference
+		rCM = atoms(:,1,i)
 
 		mPol = 0
 
@@ -35,7 +37,7 @@ do n = 1, Nk
 			if (j .eq. 3) qs(3) = qHs(2*i-1)
 		endif
 
-		do j = 1, AtomsPermol
+		do j = 1, AtomsPerMol
 			raj = atoms(:,j,i) - rCM
 			raj = raj - box*anint(raj/box)!PBC
 
@@ -68,7 +70,7 @@ end subroutine calc_chik
 !--------------------------------------------------------------------------
 !------  Longitudinal chi(k) & structure factor calculation for H2O ------
 !--------------------------------------------------------------------------
-subroutine calc_chikL
+subroutine calc_chikL_alternate 
  use main_stuff
  Implicit none 
  real(8) :: qRP, qCP, rRP, rCP, molRp, molCP
@@ -113,7 +115,7 @@ do n = 1, Nk
 
 	str_fackt(n,t) = 0 !defunct! str_fackt(n,t) +  (tmpOr    +    tmpHr)**2 +  (tmpOc    +    tmpHc)**2
 enddo
-end subroutine calc_chikL 
+end subroutine calc_chikL_alternate 
 
 
 

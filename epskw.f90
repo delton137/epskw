@@ -50,7 +50,7 @@ Do t = 1, maxsteps
 	endif 
 
  	call calc_chik
- 	call calc_chikL
+ 	if (ALT_CALC) call calc_chikL_alternate 
 
 	if (mod(t,10) .eq. 0) write(*,*) t  
 
@@ -93,7 +93,8 @@ enddo
 !--------------------------------------------------------------------------------- 
 !----------------  truncate results to k with different magnitudes -------------- 
 !--------------------------------------------------------------------------------- 
- chik0           = prefac*chik0/(magk(1)**2) 
+ if (.not. ALT_CALC) chik0 = phiL(:,1)
+
  call truncate
 
  Nk = num_ind_mags !Nk changes here!!
