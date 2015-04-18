@@ -1,5 +1,7 @@
 !-------------------------------------------------------------------------------
-!------ sort all the k vectors and truncate (average over identical k's) ------
+!truncate k-vectors (average over identical k's with the same magnitude)  
+!
+!Copyright 2014 Daniel C. Elton
 !-------------------------------------------------------------------------------
 
 module truncate_datasets

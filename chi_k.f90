@@ -1,12 +1,17 @@
 !--------------------------------------------------------------------------
-!---------------- Calculate polarization vectors -------------------------
+!subroutines to find k-dependent polarization vectors  
+!
+!Copyright 2014-2015, Daniel C. Elton
 !--------------------------------------------------------------------------
 module chi_k
 Implicit none 
 
 contains 
 
-subroutine calc_chik 
+!--------------------------------------------------------------------------
+!----------------Find polarization vectors -------------------------------
+!--------------------------------------------------------------------------
+subroutine calc_pol_vectors 
  use main_stuff
  Implicit none 
  real(8), dimension(3) :: rCM, raj 
@@ -27,6 +32,7 @@ do n = 1, Nk
 		!rCM = rCM/AtomsPerMol
 		!use first atom in system as reference
 		rCM = atoms(:,1,i)
+		if (DISTDEP) rCMs(i,:,t) = rCM 
 
 		mPol = 0
 
@@ -49,21 +55,30 @@ do n = 1, Nk
 
 		enddo!j = 1, AtomsPermol
 
-		kdotr = dot_product(kvec(:,n),rCM)
+		!add k-dependence 
+		kdotr = dot_product(kvec(:,n), rCM)
+		mPol = mPol*exp( cmplx(0, -1)*kdotr )
 
-		Pol = Pol + mPol*exp( dcmplx(0, -1)*kdotr )
+		!if TTM3F add polarization vector (cf Bertolini Tani Mol Phys 75 1065)
+		if (TTM3F) mPol = mPol + Pdip(:,i)*0.20819434d0*exp( dcmplx(0, -1)*dot_product(kvec(:,n),Msites(:,i)) )
+
+		if (DISTDEP) then 
+			mPolsL(i,t) = dot_product(kvec(:,n), mPol) 
+			mPolsT(i,:,t) = cross_product(kvec(:,n), mPol) 
+		endif
+
+		Pol = Pol + mPol 
 	
-		!if TTM3F add polarization vector
-		if (TTM3F) Pol = Pol + Pdip(:,i)*0.20819434d0*exp( dcmplx(0, -1)*dot_product(kvec(:,n),Msites(:,i)) )
-
 	enddo! i = 1, Nmol
  		
-	PolTkt(n,t,:) = cross_product(kvec(:,n) , Pol)
-	!rhokt(n,t)    = dot_product(kvec(:,n) , Pol)
+	if (.not. DISTDEP) then 
+		PolTkt(n,t,:) = cross_product(kvec(:,n) , Pol)
+		rhokt(n,t)    = dot_product(kvec(:,n) , Pol)
+	endif
 
 enddo! n = 1, Nk 
 
-end subroutine calc_chik 
+end subroutine calc_pol_vectors
 
 
 
@@ -126,13 +141,13 @@ end subroutine calc_chikL_alternate
 !----------------------------------------------------------------------------------
 function cross_product(x,z)
  Implicit None
- real(8), dimension(3), intent(in) :: x
+ double precision, dimension(3), intent(in) :: x
  double complex, dimension(3), intent(in) :: z 
  double complex, dimension(3) :: cross_product
 
-  cross_product(1) = cmplx(x(2))*z(3) - z(2)*cmplx(x(3)) 
-  cross_product(2) = z(1)*cmplx(x(3)) - cmplx(x(1))*z(3)
-  cross_product(3) = cmplx(x(1))*z(2) - z(1)*cmplx(x(2))
+  cross_product(1) = dcmplx(x(2))*z(3) - z(2)*dcmplx(x(3)) 
+  cross_product(2) = z(1)*dcmplx(x(3)) - dcmplx(x(1))*z(3)
+  cross_product(3) = dcmplx(x(1))*z(2) - z(1)*dcmplx(x(2))
 
 end function cross_product
 

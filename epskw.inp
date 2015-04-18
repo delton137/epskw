@@ -15,6 +15,8 @@ tip4p2005f		 !model (tip4p, tip4p2005,tip4p2005f,spce,tip3p,ttm3(req. extra file
 .t. 			 ! use small k set ? 
 10000			 !points to calculate/output for corr fun
 .f.			! also do alternative longitudinal calculation? (finds self part of chik0 and molecular structure factor)  
-.f.			! calculate correlation functions for dynamic structure factor ? (ISF)   
+.f.			! calculate correlation functions for dynamic structure factor ? (output Intermediate Scattering Functions) 
+.f. 			! Distance dependent decomposition??
+.f. 1000		! limit distance dependent calc. to a certain number of molecules  
 
 

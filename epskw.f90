@@ -1,9 +1,8 @@
 !----------------------------------------------------------------------------- 
-! eps(k,w) program
-!-----------------------------------------------------------------------------
+! epsk(k,w) program
 ! Computes correlation functions of the charge-charge structure factor
 !        phi(k,t) = <rho(k,t)*rho(-k,t)>/<rho(k,0)>^2/k^2 
-! It then attempts to Fourier Transform these to get Im{chi(k,w)}
+! It works for an arbitrary monomolecular system described by a point charge model
 !
 ! It outputs the longitudinal susceptibility defined by P(k,w) = \chi(k,w) D(k,w) and eps(k,w) = 1/(1-chi(k,w))
 !
@@ -11,138 +10,67 @@
 !  
 ! REFERENCE: JCP 109 5 pg 1939
 !
-! This code is based off the eps_k code
-!-----------------------------------------------------------------------------
-! 2014 Dan Elton 
+! This code is based off the eps_k code 
+!
+! in 2015 the epskwR code was merged into this code 
+!
+! 2014-2015 Daniel C. Elton 
 !----------------------------------------------------------------------------- 
 Program epskw
 	use m_timer 
 	use main_stuff
-	use correlation_function
+	use InputOutput
 	use chi_k
-	use truncate_datasets
+	use calc_phi
 Implicit None
 
 call set_timer
 call read_input_file
 call set_up_model
 call open_trajectory_files
-call setup_k_vectors
 
- chik0_self = 0 
- chik0 = 0 
- str_fac = 0 
- str_fackt = 0 
- rhokt = 0 
+if (.not. DISTDEP)       call setup_k_vectors_and_allocate
+if (DISTDEP) call setup_dist_dep
 
 !------------------------------------------------------------------------------
 !---------------------------------- main loop --------------------------------
 !------------------------------------------------------------------------------
 nsteps = 0
-Do t = 1, maxsteps
+ do t = 1, maxsteps
   
 	call read_trajectory_frame
 
 	if ((filetype .eq. "xtc") .and. (RET.EQ.0)) then 
-		write(*,*) "reached end of file at t = ", t 
-		write(*,*) "length of traj is ", TIME, "ps "
+		write(*,*) "reached end of file at t = ", t, "length of traj is ", TIME, "ps "
 		goto 1000 
 	endif 
 
- 	call calc_chik
+ 	call calc_pol_vectors
+
  	if (ALT_CALC) call calc_chikL_alternate 
 
 	if (mod(t,10) .eq. 0) write(*,*) t  
 
  	nsteps = nsteps + 1 
+ enddo 
 
-enddo 
-
-1000 continue 
+ 1000 continue 
 
  write(*,*) "number of steps used: ", nsteps
  if (nsteps_out .gt. nsteps) nsteps_out = nsteps
+ call elapsed_time(seconds) 
 
-!--------------------------------------------------------------------------------- 
-!----------------  Compute autocorrelation functions ---------------------------- 
-!--------------------------------------------------------------------------------- 
- write(*,'(a)',advance='no') "calculating correlation functions .."
- allocate(phiTcomponent(nsteps))
- allocate(phiL(Nk,nsteps))
- allocate(phiT(Nk,nsteps))
-
- phiL = 0 
- phiT = 0 
- phiTcomponent = 0 
-
- do i = 1, Nk
-	!call simple_complex_corr_function(rhokt(i,1:nsteps), phiL(i,1:nsteps_out), nsteps, nsteps_out)
-	!call calc_corr_function(rhokt(i,1:nsteps), phiL(i,1:nsteps), nsteps) 
-	call calc_corr_function2(rhokt(i,1:nsteps), phiL(i,1:nsteps), nsteps) 
-
-	do ix = 1,3
-		!call simple_complex_corr_function(PolTkt(i,1:nsteps,ix), phiTcomponent, nsteps, nsteps_out)
-		!call calc_corr_function(PolTkt(i,1:nsteps,ix), phiTcomponent, nsteps) 
-		call calc_corr_function2(PolTkt(i,1:nsteps,ix), phiTcomponent, nsteps) 
-		phiT(i,1:nsteps_out) = phiT(i,1:nsteps_out) + phiTcomponent(1:nsteps_out)
-	enddo
- enddo
- write(*,*) "... done"
+ if (DISTDEP) then 
+	call calc_phikRt
+	call write_out_dist_dependent
+ else 
+	call calc_phikt
+	call write_out_phi_chik_raw
+	call write_out_phi_chik_xmgrace
+ endif
 
 
-!--------------------------------------------------------------------------------- 
-!----------------  truncate results to k with different magnitudes -------------- 
-!--------------------------------------------------------------------------------- 
- if (.not. ALT_CALC) chik0 = phiL(:,1)
-
- call truncate
-
- Nk = num_ind_mags !Nk changes here!!
-
- !save static transverse part 
- eps0T_tr  = phiT_tr(:,1) 
-
-do n = 1, num_ind_mags
-	!2nd normalization of correlation fun
-	phiT_tr(n,:) = phiT_tr(n,:)/phiT_tr(n,1)
-	phiL_tr(n,:) = phiL_tr(n,:)/phiL_tr(n,1)
-enddo
-
-
-!--------------------------------------------------------------------------------- 
-!----------------  Normalization & prefactors ----------------------------------- 
-!---------------------------------------------------------------------------------
- vol = box(1)*box(2)*box(3)
- prefac = (e2C**2)/(eps_0*kb*temp*vol*a2m) 
-
-if (DYNAMIC_STR_FAC) then
- prefac = 1/(dble(Nmol)*3d0) 
-endif
-
- !prefactors
- chik0_tr      = prefac*chik0_tr/(dble(nsteps))  
- chik0_self_tr = prefac*chik0_self_tr/(dble(nsteps)) 
- chik0_err_tr  = prefac*chik0_err_tr/(dble(nsteps))
- str_fackt_tr  = str_fackt_tr/(dble(Nmol)*dble(nsteps))  
-
-
-do n = 1, num_ind_mags
- 	chik0_tr(n) = chik0_tr(n)/(magk_tr(n)**2)
-
-	chik0_self_tr(n) = chik0_self_tr(n)/(magk_tr(n)**2)
-	
- 	chik0T_tr(n)  = prefac*eps0T_tr(n)/(magk_tr(n)**2)  
-
-	eps0T_tr(n) = chik0T_tr(n)  + 1
-
-	str_fac_tr(n) = sum(str_fackt_tr(n,1:nsteps))/3d0 !fudge factor of 1/3 needed here
-enddo
-
-!call calc_Imagkw
- 
-call write_out
-
-call elapsed_time(seconds) 
+ call elapsed_time(seconds) 
 
 
 End Program epskw
