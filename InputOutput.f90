@@ -37,10 +37,10 @@ Implicit none
  read(5,*) DIPSPHERE
  read(5,*) SPHERESPHERE
 
- if ((SPHERESPHERE .eq. .true.) .and. (DIPSPHERE .eq. .true.)) then 
+ if ((SPHERESPHERE .eqv. .true.) .and. (DIPSPHERE .eqv. .true.)) then 
 	write(*,*) "ERROR IN INPUT FILE - please select either dip-sphere or sphere-sphere"
  endif
- if ((DISTDEP .eq. .true.) .and. ((SPHERESPHERE .eq. .false.) .and. (DIPSPHERE .eq. .false.))) then 
+ if ((DISTDEP .eqv. .true.) .and. ((SPHERESPHERE .eqv. .false.) .and. (DIPSPHERE .eqv. .false.))) then 
 	write(*,*) "ERROR IN INPUT FILE - please select either dip-sphere or sphere-sphere"
  endif
 
@@ -112,7 +112,7 @@ if (filetype .eq. "xtc") then
 
 	Nmol = Na/AtomsPerMol
 	if (TIP4P) Nmol = Na/4
-	if (model == 'methanol') Nmol = Na/6
+	if (model == 'methanolH1') Nmol = Na/6
 
     	write(*,*) "Reading XTC. If this is a  4 site model we assume all 4 sites are in the XTC."
      	write(*,*) "We assume the units are nm in the .xtc. They will be converted to Ang."
@@ -166,9 +166,9 @@ Implicit none
 			atoms(:,1,j)  = X(indx+9:indx+11)
 			indx = indx + 12
 		enddo
-	!methanol model special case
+	!methanol H1 model special case
 	!the 3 dummy hydrogens are skipped
-	else if (model == 'methanol') then
+	else if (model == 'methanolH1') then
 		do j = 1, Nmol
 			atoms(:,1,j)  = X(indx+0:indx+2)  !C 
 			atoms(:,2,j)  = X(indx+12:indx+14)!O

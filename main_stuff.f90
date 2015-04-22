@@ -139,6 +139,17 @@ else if ((model == 'ttm3') .or. (model == 'ttm3f')) then
 	TTM3F = .true.
 
 else if (model == 'methanol') then
+	write(*,*) "Model is methanol with GAFF parameters"
+	AtomsPerMol = 6
+	allocate(qs(AtomsPerMol))
+	qs(1)  = .23940 !C atom
+	qs(2)  = .0035  !CH1 atom
+	qs(3)  = .0035  !CH2 atom
+	qs(4)  = .0035  !CH3 atom
+	qs(5)  =-.6676  !O atom
+	qs(6)  =0.4177  !OH atom
+
+else if (model == 'methanolH1') then
 	write(*,*) "Model is methanol with H1+3 parameters"
 	AtomsPerMol = 3
 	allocate(qs(AtomsPerMol))
