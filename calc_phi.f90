@@ -17,6 +17,7 @@ subroutine calc_phikt
  use correlation_function
  use truncate_datasets
 Implicit none 
+
 !----------------  Compute autocorrelation functions  
 
  write(*,'(a)',advance='no') "calculating correlation functions .."
@@ -150,7 +151,10 @@ subroutine calc_distdep
 
 !!$OMP PARALLEL 
 !!$OMP DO  reduction(+:phiL,phiT)
-do i = 1, Nmol, Nskip
+do i = 1, Nmol 
+	spheresT = 0 
+	spheresL = 0 	
+ 	numR     = 0  
 	do t = 1, nsteps
 		!Kirkwood spheres calculation 
 		NumR = 0 
@@ -190,6 +194,8 @@ do i = 1, Nmol, Nskip
 	if (mod(i,100) .eq. 1) write(*,*) "calculating corr fun. ", (i-1*Nr )*4, " of ", Ncalc*Nr*4
 
 	do j = 1, Nr	
+		phicomponentL = 0 
+		phicomponent  = 0 !shouldn't be necessary 
 		if (.not. IRCALC) then 
 			if (DIPSPHERE)    call  calc_cross_corr_function2(mPolsL(i,:)   ,spheresL(j, :), phicomponentL, nsteps) 
 			if (SPHERESPHERE) call  calc_cross_corr_function2(spheresL(j, :),spheresL(j, :), phicomponentL, nsteps) 
