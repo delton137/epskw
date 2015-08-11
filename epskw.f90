@@ -10,8 +10,6 @@
 !  
 ! REFERENCE: JCP 109 5 pg 1939
 !
-! This code is based off the eps_k code 
-!
 ! in 2015 the epskwR code was merged into this code 
 !
 ! 2014-2015 Daniel C. Elton 
@@ -45,9 +43,13 @@ nsteps = 0
 		goto 1000 
 	endif 
 
- 	call calc_pol_vectors
-
- 	if (ALT_CALC) call calc_chikL_alternate 
+	if (K_EQ_0_DIST_DEP) then
+		call calc_dip_vectors
+	else if (ALT_CALC) then
+		call calc_chikL_alternate 
+	else 
+	 	call calc_pol_vectors
+	endif
 
 	if (mod(t,10) .eq. 0) write(*,*) t  
 
@@ -59,7 +61,10 @@ nsteps = 0
  write(*,*) "number of steps used: ", nsteps
  if (nsteps_out .gt. nsteps) nsteps_out = nsteps
  call elapsed_time(seconds) 
-
+ 
+ deallocate(Oxy)
+ deallocate(Hydro) 
+ 
  if (DISTDEP) then 
 	call calc_phikRt
 	call write_out_dist_dependent
@@ -68,8 +73,7 @@ nsteps = 0
 	call write_out_phi_chik_raw
 	call write_out_phi_chik_xmgrace
  endif
-
-
+ 
  call elapsed_time(seconds) 
 
 

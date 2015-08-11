@@ -154,7 +154,7 @@ subroutine calc_distdep
 do i = 1, Nmol 
 	spheresT = 0 
 	spheresL = 0 	
- 	numR     = 0  
+
 	do t = 1, nsteps
 		!Kirkwood spheres calculation 
 		NumR = 0 
@@ -196,7 +196,7 @@ do i = 1, Nmol
 	do j = 1, Nr	
 		phicomponentL = 0 
 		phicomponent  = 0 !shouldn't be necessary 
-		if (.not. IRCALC) then 
+		if (.not. K_EQ_0_DIST_DEP) then 
 			if (DIPSPHERE)    call  calc_cross_corr_function2(mPolsL(i,:)   ,spheresL(j, :), phicomponentL, nsteps) 
 			if (SPHERESPHERE) call  calc_cross_corr_function2(spheresL(j, :),spheresL(j, :), phicomponentL, nsteps) 
 		endif

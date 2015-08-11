@@ -67,7 +67,7 @@ complex, dimension(:,:), allocatable :: spheresL
 complex, dimension(:,:,:), allocatable :: spheresT
 complex, dimension(:,:), allocatable :: mPolsL
 complex, dimension(:,:,:), allocatable :: mPolsT
-logical :: DISTDEP, IRCALC, DIPSPHERE, SPHERESPHERE, LIMIT_CALC 
+logical :: DISTDEP, IRCALC, DIPSPHERE, SPHERESPHERE, LIMIT_CALC, K_EQ_0_DIST_DEP
 integer :: Ncalc, Nskip
 integer :: Nr, countR
 real, dimension(:), allocatable :: numR
@@ -293,7 +293,7 @@ if (max_diag .gt. 0) then
 				mag1 = dsqrt( (i*mink (1))**2 + (j*mink (2))**2 + (k*mink (3))**2 )
 					kvec(:,n) = (/  i*mink (1), j*mink (2), k*mink (3) /)
 					mags(n) = mag1
-                          	!!     write(*,*) "adding diag ", mags(n)
+					!!     write(*,*) "adding diag ", mags(n)
 					n = n + 1
 
 					if (n .gt. max_num_kvecs-1) then

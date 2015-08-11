@@ -81,10 +81,51 @@ enddo! n = 1, Nk
 end subroutine calc_pol_vectors
 
 
+!--------------------------------------------------------------------------
+!----------------Find dipole vectors (for dist-dep, k=0 case) ------------
+!--------------------------------------------------------------------------
+subroutine calc_dip_vectors 
+ use main_stuff
+ Implicit none 
+ double precision, dimension(3) :: v1, v2, d1 !polarization vector for molecule
 
-!--------------------------------------------------------------------------
-!------  Longitudinal chi(k) & structure factor calculation for H2O ------
-!--------------------------------------------------------------------------
+do i = 1, Nmol
+	rCMs(i,:,t) = atoms(:,1,i)
+	!find dipole
+	if (TTM3F) then 
+		v1 = Hydro(:,2*i-0) - Msites(:,i)
+   		v1 = v1 - box*anint(v1/box)!PBC
+		v2 = Hydro(:,2*i-1) - Msites(:,i)
+		v2 = v2 - box*anint(v2/box)!PBC
+	      	d1 = (v1*qHs(2*i-0)+v2*qHs(2*i-1))
+	      	d1 = d1 + Pdip(:,i)*0.20819434d0!convert Debye to eAng
+	else 
+		!(it is assumed that "Oxy" is actually the Msite positions here if TIP4P)
+		v1 = Hydro(:,2*i-0) - Oxy(:,i)
+   		v1 = v1 - box*anint(v1/box)!PBC
+		v2 = Hydro(:,2*i-1) - Oxy(:,i)
+		v2 = v2 - box*anint(v2/box)!PBC
+		d1 = (v1*qH+v2*qH)
+	endif 
+
+	mPolsT(i, :, t) = d1 !store dipoles here
+enddo
+
+end subroutine calc_dip_vectors
+
+
+
+
+
+
+
+
+
+
+
+!---------------------------------------------------------------------------
+!- alternative longitudinal chi(k) & structure factor calculation for H2O -
+!---------------------------------------------------------------------------
 subroutine calc_chikL_alternate 
  use main_stuff
  Implicit none 
@@ -131,9 +172,6 @@ do n = 1, Nk
 	str_fackt(n,t) = 0 !defunct! str_fackt(n,t) +  (tmpOr    +    tmpHr)**2 +  (tmpOc    +    tmpHc)**2
 enddo
 end subroutine calc_chikL_alternate 
-
-
-
 
 
 !----------------------------------------------------------------------------------
