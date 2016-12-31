@@ -1,13 +1,13 @@
 # epskw
 A code to calculate the nonlocal dielectric function eps(k,omega) and static structure factor for trajectory files containing pure water. Reads .xtc or .xyz files 
 
-## COMPILATION INSTRUCTIONS
+## Compilation instructions
 To compile you need the xtc library libxdrf.a. A precompiled version is included in this repo,  but chances are it will not work on your system and you will need to compile your own version. To obtain this library, download the source code from [ftp://ftp.gromacs.org/pub/contrib/xdrfile-1.1.tar.gz](ftp://ftp.gromacs.org/pub/contrib/xdrfile-1.1.tar.gz), edit the makefile as necessary and make. Copy libxdrf.a into the /epskw folder. Run "make" to compile
 
 ## Running the program 
 Edit the fixed format input file epskw.inp to specify your coordinate file, output title, and options for calculation.  
 to run, use: 
-`.epskw.x < epskw.inp`
+`./epskw.x < epskw.inp`
 
 ## Plotting the results  
 Output files are outputted in a form readible by xmgrace. To view the figures use:  
