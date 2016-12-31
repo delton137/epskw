@@ -87,7 +87,7 @@ end subroutine calc_pol_vectors
 subroutine calc_dip_vectors 
  use main_stuff
  Implicit none 
- double precision, dimension(3) :: v1, v2, d1 !polarization vector for molecule
+ double precision, dimension(3) :: d1 !polarization vector for molecule
 
 do i = 1, Nmol
 	rCMs(i,:,t) = atoms(:,1,i)

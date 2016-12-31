@@ -45,7 +45,7 @@ Implicit none
 	write(*,*) "ERROR IN INPUT FILE - please select either dip-sphere or sphere-sphere"
  endif
  if ((K_EQ_0_DIST_DEP .eqv. .true.) .and. (DISTDEP .eqv. .false.)) then
-	write(*,*) "You selected to do k=0 calculation, with dist. dep. = .f.. Since k=0 is only configured for dist dependent, setting it equal to true"
+	write(*,*) "Since k=0 is only configured for dist dependent, setting it equal to true"
  endif
 
  LIMIT_CALC = .false.

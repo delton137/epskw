@@ -33,7 +33,7 @@ real(8) ::    junkmag, muL
  character(len=3) :: sym
  character(120)   :: fileinp
  character(120) :: TTM3F_dip_input,TTM3F_input,fileheader,model
-real(8) :: vol,  maxk,     temp,  qOqH, delta
+real(8) :: vol,  maxk,     temp,  qO,qH, delta
 real(8) :: prefac,  r, seconds, rOM, timestep, max_freq,  max_diag
 integer :: Na, Nmol, i, j, k, l, ia, ix, nsteps, nsteps_out, w
 integer :: npts, t, n, Nk, ierror,  Nw, num_face_diagonals, num_body_diagonals
