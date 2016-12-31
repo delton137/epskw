@@ -1,16 +1,16 @@
-'256TIP4P2005f_100ps_300K_1000.xyz'               !input file name   
-'xyz'			 !filetype "xtc" or "xyz"
-'TIP4P2005f_test' 	 !label for output file(s) 
-19.8093   19.8093   19.8093   		 !length (dimensions of box in Angstroms. If .xtc this will be read)
+'traj10000.xtc'               !input file name   
+'xtc'			 !filetype "xtc" or "xyz"
+'epskw_10000TIP4P2005'                !label for output file(s)
+66.874237  66.874237  66.874237     !length (size of box in Angstroms)
 300			 !Temperature
 .f.			 !count number of steps in file? (for .xyz only)
 2.5			 !max k to use (in inverse Angstroms)
 0			 !number of face diagonals to use with the form (l,l,0), (l,0,l) or (0,l,l)
 0			 !number of body diagonals to use (l,l,l)
 0			 !use all diagonals up to k = ___ (or set to 0) 
-tip4p2005f		 !model (tip4p, tip4p2005,tip4p2005f,spce,tip3p,ttm3(req. extra file), generic)
-2000			 !MAX number of steps to use
-768			 !Number of atoms (this will be checked)
+tip4p2005		 !model (tip4p, tip4p2005,tip4p2005f,spce,tip3p,ttm3(req. extra file), generic)
+3500			 !MAX number of steps to use
+40000			 !Number of atoms (this will be checked)
 .1			 !timestep in ps (if .xtc this will be checked) 
 .t. 			 ! use small k set ? 
 1000			 !points to calculate/output for corr fun
@@ -19,4 +19,4 @@ tip4p2005f		 !model (tip4p, tip4p2005,tip4p2005f,spce,tip3p,ttm3(req. extra file
 .t. 	! Distance dependent decomposition??
 .t.     ! "dipole-sphere" distance decomposition
 .f. 	! "sphere-sphere" distance decomposition
-
+.f.
