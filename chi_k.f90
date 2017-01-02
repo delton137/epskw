@@ -60,7 +60,7 @@ do n = 1, Nk
 		mPol = mPol*exp( cmplx(0, -1)*kdotr )
 
 		!if TTM3F add polarization vector (cf Bertolini Tani Mol Phys 75 1065)
-		if (TTM3F) mPol = mPol + Pdip(:,i)*0.20819434d0*exp( dcmplx(0, -1)*dot_product(kvec(:,n),Msites(:,i)) )
+		if (TTM3F) mPol = mPol + Pdip(:,i)*0.20819434d0*exp( dcmplx(0, -1)*dot_product(kvec(:,n),atoms(:,1,i)) )
 
 		if (DISTDEP) then 
 			mPolsL(i,t) = dot_product(kvec(:,n), mPol) 
@@ -83,34 +83,29 @@ end subroutine calc_pol_vectors
 
 !--------------------------------------------------------------------------
 !----------------Find dipole vectors (for dist-dep, k=0 case) ------------
-!----------------This is deprecated as of 12/16                ------------
+!----------------This only works for water!! -----------------------------
 !--------------------------------------------------------------------------
 subroutine calc_dip_vectors 
  use main_stuff
  Implicit none 
- real(8),dimension(:,:),allocatable :: Oxy, Hydro, Msites
  double precision, dimension(3) :: d1 !polarization vector for molecule
  
- !!! needs to be filled in to use : 
- !Oxy =  
- !Hydro = 
- !Msites = 
  
 do i = 1, Nmol
 	rCMs(i,:,t) = atoms(:,1,i)
 	!find dipole
 	if (TTM3F) then 
-		v1 = Hydro(:,2*i-0) - Msites(:,i)
+		v1 = atoms(:,2,i) - atoms(:,1,i)
    		v1 = v1 - box*anint(v1/box)!PBC
-		v2 = Hydro(:,2*i-1) - Msites(:,i)
+		v2 = atoms(:,3,i) - atoms(:,1,i)
 		v2 = v2 - box*anint(v2/box)!PBC
 	      	d1 = (v1*qHs(2*i-0)+v2*qHs(2*i-1))
 	      	d1 = d1 + Pdip(:,i)*0.20819434d0!convert Debye to eAng
 	else 
-		!(it is assumed that "Oxy" is actually the Msite positions here if TIP4P)
-		v1 = Hydro(:,2*i-0) - Oxy(:,i)
+		!(it is assumed that atoms(:,1,i) is actually the Msite positions here if TIP4P)
+		v1 = atoms(:,2,i) - atoms(:,1,i)
    		v1 = v1 - box*anint(v1/box)!PBC
-		v2 = Hydro(:,2*i-1) - Oxy(:,i)
+		v2 = atoms(:,3,i) - atoms(:,1,i)
 		v2 = v2 - box*anint(v2/box)!PBC
 		d1 = (v1*qH+v2*qH)
 	endif 
@@ -119,15 +114,6 @@ do i = 1, Nmol
 enddo
 
 end subroutine calc_dip_vectors
-
-
-
-
-
-
-
-
-
 
 
 !---------------------------------------------------------------------------
@@ -154,8 +140,8 @@ do n = 1, Nk
 			if (j .eq. 3) qs(3) = qHs(2*j-1)
 
 			muL = dot_product(kvec(:,n),Pdip(:,i))*0.20819434d0  !convert Debye to eAng
-			molRP = molRP + muL*dcos( dot_product(kvec(:,n),Msites(:,i)) )
-			molCP = molcP + muL*dsin( dot_product(kvec(:,n),Msites(:,i)) )
+			molRP = molRP + muL*dcos( dot_product(kvec(:,n),atoms(:,1,i)) )
+			molCP = molcP + muL*dsin( dot_product(kvec(:,n),atoms(:,1,i)) )
 		endif
 
 		!molecular longitudinal polarization

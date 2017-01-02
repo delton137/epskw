@@ -1,5 +1,5 @@
 
-COMP = ifort #gfortran
+COMP = gfortran   #ifort
 FFLAGS = -O3 -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE
 FFTW =  #-L/usr/lib -lfftw3 -lm
 

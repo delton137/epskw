@@ -204,7 +204,7 @@ Implicit none
   	if (TIP4P .or. TTM3F) then
 		do i = 1, Nmol
 			do j = 1, 3
-				read (12,*) sym, (atoms(ix, j, i),ix=1,3)
+				read (12,*) sym, (atoms(ix, j, i), ix=1,3)
 			enddo
 			v1 = atoms(:,2,i)-atoms(:,1,i)
    			v1 = v1 - box*anint(v1*ibox)!PBC
@@ -212,12 +212,12 @@ Implicit none
        			v2 = v2 - box*anint(v2*ibox)!PBC
 			summ = v1 + v2  
 			v3=(summ/sqrt(dot_product(summ,summ)))*rOM!vector from O to m-site
-			atoms(:, 1, i) = atoms(:, 1, i) + v3 !shift the O position to they m-site
+			atoms(:, 1, i) = atoms(:, 1, i) + v3 !shift the O position to the m-site
 		enddo
 	else
 		do i = 1, Nmol
 			do j = 1, AtomsPerMol
-				read (12,*) sym, (atoms(ix, i, j),ix=1,3)
+				read (12,*) sym, (atoms(ix, i, j), ix=1,3)
 			enddo
 		enddo
 	endif

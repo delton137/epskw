@@ -23,7 +23,7 @@ The included file epskw.inp gives an example of an input file, which is fixed fo
 
 The following forcefield models are supported:  
 * TIP4P, TIP4P2005, TIP4P2005f, SPCE, TIP3P, 
-* TTM3F (requires extra file containing charges of all atoms in each timestep in the order OHHOHHOHH.., no spaces between timesteps)
+* TTM3F (requires two file containing charges of all atoms in each timestep in the order OHHOHHOHH.., and a file containing the electronic polarization vectors. no spaces between timesteps. Use the same prefix as the coordinate file, but drop the suffix ".xyz") and add "Edip.dat" and "chgs.dat" instead.)
 * methanol (GAFF) 
 * methanolH1 (H1+3 parameters)
 * acetonitrile (GAFF)
