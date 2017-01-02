@@ -62,8 +62,7 @@ nsteps = 0
  if (nsteps_out .gt. nsteps) nsteps_out = nsteps
  call elapsed_time(seconds) 
  
- deallocate(Oxy)
- deallocate(Hydro) 
+ deallocate(atoms)
  
  if (DISTDEP) then 
 	call calc_phikRt

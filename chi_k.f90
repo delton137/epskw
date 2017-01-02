@@ -83,12 +83,19 @@ end subroutine calc_pol_vectors
 
 !--------------------------------------------------------------------------
 !----------------Find dipole vectors (for dist-dep, k=0 case) ------------
+!----------------This is deprecated as of 12/16                ------------
 !--------------------------------------------------------------------------
 subroutine calc_dip_vectors 
  use main_stuff
  Implicit none 
+ real(8),dimension(:,:),allocatable :: Oxy, Hydro, Msites
  double precision, dimension(3) :: d1 !polarization vector for molecule
-
+ 
+ !!! needs to be filled in to use : 
+ !Oxy =  
+ !Hydro = 
+ !Msites = 
+ 
 do i = 1, Nmol
 	rCMs(i,:,t) = atoms(:,1,i)
 	!find dipole

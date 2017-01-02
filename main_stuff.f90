@@ -16,7 +16,6 @@ real(8), dimension(3) :: mink
 real(8) :: mag1
 integer, dimension(3) :: max_num
 !-----------------------------
-real(8),dimension(:,:),allocatable :: Oxy, Hydro, Msites
 real(8),dimension(:)  ,allocatable :: omegas
 real(8), dimension(:), allocatable :: phicomponent, phicomponentL, phicomponentT
 real(8),dimension(:)  ,allocatable ::  chik0,   chik0_self, chik0_distinct
