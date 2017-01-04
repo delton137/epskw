@@ -1,5 +1,9 @@
 !---------------------------------------------------------------------
-!Timing routine
+! Timing routine
+!
+! Copyright 2014 Daniel C. Elton <delton 17 at gmail .com> 
+! 
+! License: The MIT License
 !---------------------------------------------------------------------
 module m_timer
 implicit none

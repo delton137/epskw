@@ -1,7 +1,9 @@
 !---------------------------------------------------------------------
 !Module to store the global variables and various initialization subroutines
 !
-!Copyright 2014-2015, Daniel C. Elton
+! Copyright 2014-2015 Daniel C. Elton <delton 17 at gmail .com> 
+! 
+! License: The MIT License
 !---------------------------------------------------------------------
 Module main_stuff
  Implicit none 

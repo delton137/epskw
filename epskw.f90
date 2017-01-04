@@ -8,11 +8,13 @@
 !
 ! It also outputs the static nonlocal susceptibility chi(k,0) and the static structure factor S(k,0)
 !  
-! REFERENCE: JCP 109 5 pg 1939
+! Reference: JCP 109 (5) pg 1939
 !
 ! in 2015 the epskwR code was merged into this code 
 !
-! 2014-2015 Daniel C. Elton 
+! Copyright 2014-2015 Daniel C. Elton <delton 17 at gmail .com> 
+! 
+! License: The MIT License
 !----------------------------------------------------------------------------- 
 Program epskw
 	use m_timer 

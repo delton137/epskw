@@ -1,8 +1,11 @@
 !--------------------------------------------------------------------------
-!Module for all of the file reading/writing subroutines
-!General routines for reading/writing .xtc and .xyz can be found here 
+! Module for all of the file reading/writing subroutines
 !
-!Copyright 2014-2015 Daniel C. Elton
+! General routines for reading/writing .xtc and .xyz can be found here 
+!
+! Copyright 2014-2015 Daniel C. Elton <delton 17 at gmail .com> 
+! 
+! License: The MIT License
 !--------------------------------------------------------------------------
 module InputOutput
 use main_stuff

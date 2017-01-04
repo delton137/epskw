@@ -1,8 +1,10 @@
 !--------------------------------------------------------------------------
-!routines for managing calculation of correlation functions 
-!and routine for distance decomposition calculation 
+! routines for managing calculation of correlation functions 
+! and routine for distance decomposition calculation 
 !
-!Copyright 2014-2015, Daniel C. Elton
+! Copyright 2014-2015, Daniel C. Elton <delton 17 at gmail .com> 
+! 
+! License: The MIT License
 !--------------------------------------------------------------------------
 
 module calc_phi

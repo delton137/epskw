@@ -1,7 +1,9 @@
 !-------------------------------------------------------------------------------
-!truncate k-vectors (average over identical k's with the same magnitude)  
+! truncate k-vectors (average over identical k's with the same magnitude)  
 !
-!Copyright 2014 Daniel C. Elton
+! Copyright 2014 Daniel C. Elton <delton 17 at gmail .com> 
+! 
+! License: The MIT License
 !-------------------------------------------------------------------------------
 
 module truncate_datasets

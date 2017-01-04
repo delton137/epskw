@@ -2,7 +2,10 @@
 !Various subroutines to calculate autocorrelation and crosscorrelation functions
 !of the form <phi1(t)phi2*(t)> 
 !
-!Copyright 2015 Daniel C. Elton 
+! Copyright 2015 Daniel C. Elton <delton 17 at gmail .com> 
+! 
+! License: The MIT License
+!
 !-------------------------------------------------------------------------------
 
 
