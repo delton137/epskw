@@ -1,7 +1,7 @@
 !--------------------------------------------------------------------------
 ! subroutines to find k-dependent polarization vectors  
 !
-! Copyright 2014-2015, Daniel C. Elton <delton 17 at gmail .com> 
+! Copyright 2014-2015, Daniel C. Elton
 ! 
 ! License: The MIT License
 !--------------------------------------------------------------------------
